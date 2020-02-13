@@ -1,9 +1,8 @@
 from Board import *
 
 def handleTime(elapsedTime):
-	# better formate the elapsedTime into hour,min,sec,msec
-	# sth to implement here
-	timeString = ""
+	# better format the elapsedTime into hour,min,sec,msec
+	timeString = "{} hour {} min {} sec {} msec".format(elapsedTime//3600,(elapsedTime%3600)//60,int(elapsedTime%60),int(1000*(elapsedTime%1)))
 	return timeString
 
 def generateOutput(searchResults):
