@@ -23,10 +23,12 @@ def main():
 	except Exception as e:
 		return False
 
+	# broadcast what we read from the input
+	repeatChoice(initBoard,searchType,heuristicFunc)
 
 	# please, make your returning searchResults a dic
-	searchResults = search(initBoard,searchType,heuristicFunc)
-	generateOutput(searchResults)
+	#searchResults = search(initBoard,searchType,heuristicFunc)
+	#generateOutput(searchResults)
 	return True
 
 

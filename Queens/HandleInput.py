@@ -11,7 +11,7 @@ def formatError():
 
 def repeatChoice(initBoard,searchType,heuristicFunc):
 	print("Input processing complete, you have chosen:")
-	print("")
+	#print("")
 
 	print("Initial Board State:")
 	printBoard(initBoard)
@@ -31,7 +31,7 @@ def repeatChoice(initBoard,searchType,heuristicFunc):
 	#print("")
 	return True
 
-def readInut():
+def readInput():
 	# check passing in parameters
 	if len(sys.argv) < 4:
 		formatError()

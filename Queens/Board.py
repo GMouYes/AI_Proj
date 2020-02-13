@@ -1,24 +1,33 @@
 import csv
+import numpy as np
 
 def printBoard(boardState):
-	# sth to implement here
-	pass
+	print(boardState.state)
+	return True
 
 def printMoves(moves):
 	# sth to implement here
 	pass
 
 def readBoard(fileName):
-	# sth to implement here
-	returnBoard = board()
+	validList = [str(i) for i in range(10)]
+	boardState = []
+
+	with open(fileName, "r") as f:
+		csvReader = csv.reader(f)
+		for row in csvReader:
+			boardState.append([int(item) if item in validList else 0 for item in row])
+	returnBoard = board(np.array(boardState))
 	return returnBoard
 
 class board(object):
 	"""docstring for board"""
-	def __init__(self, state: list):
+	def __init__(self, state=None):
 		# sth to implement here
 		super(board, self).__init__()
 		self.state = state
+		self.h = state.shape[0]
+		self.w = state.shape[1]
 
 	# @staticmethod
 	# def cost(b1, b2):
@@ -26,6 +35,7 @@ class board(object):
 
 	def heuristic(self):
 		# return heuristic
+		return None
 
 
 	def get_neighbors(self):

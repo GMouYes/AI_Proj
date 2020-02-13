@@ -14,7 +14,7 @@ def generateOutput(searchResults):
 	print("")
 
 	print("#Nodes expanded:", searchResults["expandNodeCount"])
-	print("Time elapsed:", handleTime(searchResults["elapsedTime"])
+	print("Time elapsed:", handleTime(searchResults["elapsedTime"]))
 	print("Effective branching factor:", searchResults["branchingFactor"])
 	print("Cost of moves:", searchResults["cost"])
 	print("Seq of moves:")
