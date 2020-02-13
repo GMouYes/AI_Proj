@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+import copy
 
 def printBoard(boardState):
 	print(boardState.state)
@@ -101,6 +102,21 @@ class board(object):
 			return self.h1
 		else:
 			return self.h2
+
+	def get_neighbors(self):
+		returnList = []
+		for pos in self.queenPos:
+			for move in range(-4,4):
+				if self.ifValidMove(pos,move):
+					row,col = pos
+					weight = self.state[row][col]
+					new_state = copy.deepcopy(self.state)
+
+					new_state[row][col] = 0
+					new_state[row+move][col] = weight
+
+					returnList.append((board(new_state),self.cost(row,col,move)))
+		return returnList
 	'''
 	def get_neighbors(self):
 		# return all next states and its cost;
