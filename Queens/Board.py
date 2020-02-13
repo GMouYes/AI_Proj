@@ -16,18 +16,23 @@ def readBoard(fileName):
 	with open(fileName, "r") as f:
 		csvReader = csv.reader(f)
 		for row in csvReader:
-			boardState.append([int(item) if item in validList else 0 for item in row])
+			boardState.append([int(item)**2 if item in validList else 0 for item in row])
 	returnBoard = board(np.array(boardState))
 	return returnBoard
 
 class board(object):
 	"""docstring for board"""
 	def __init__(self, state=None):
-		# sth to implement here
 		super(board, self).__init__()
+		# state is a 2d ndarray
+		# 0 means empty
+		# non zeros indicate weights^2 of queens
 		self.state = state
 		self.h = state.shape[0]
-		self.w = state.shape[1]
+		self.w = state.shape[1] # this is also #Queens
+
+	def cost(self):
+		pass
 
 	# @staticmethod
 	# def cost(b1, b2):

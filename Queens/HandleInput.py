@@ -11,24 +11,19 @@ def formatError():
 
 def repeatChoice(initBoard,searchType,heuristicFunc):
 	print("Input processing complete, you have chosen:")
-	#print("")
 
 	print("Initial Board State:")
 	printBoard(initBoard)
-	#print("")
 
 	print("Searching Algo:", end=" ")
 	if searchType == "1":
 		print("A Star")
 	else:
 		print("Greedy Hill Climbing")
-	#print("")
 
 	print("Heuristic Function:", heuristicFunc)
-	#print("")
 
 	print("Now searching, this may take some time ...")
-	#print("")
 	return True
 
 def readInput():
