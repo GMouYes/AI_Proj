@@ -17,6 +17,7 @@ def readBoard(fileName):
 		csvReader = csv.reader(f)
 		for row in csvReader:
 			boardState.append([int(item)**2 if item in validList else 0 for item in row])
+
 	returnBoard = board(np.array(boardState))
 	return returnBoard
 
@@ -37,8 +38,8 @@ class board(object):
 		self.lightAttackList = self.lighterAttackPieceList()
 
 		# two heuristic values
-		self.h1 = min(lightAttackList)
-		self.h2 = sum(lightAttackList)
+		self.h1 = min(self.lightAttackList)
+		self.h2 = sum(self.lightAttackList)
 
 	def ifAttack(self,index1,index2):
 		# check if two pieces are attacking each other
@@ -69,10 +70,11 @@ class board(object):
 			for index2 in range(index1+1,self.queenPos.shape[0]):
 				pos1 = self.queenPos[index1]
 				pos2 = self.queenPos[index2]
-				if ifAttack(pos1,pos2):
+				if self.ifAttack(pos1,pos2):
 					weight1 = self.state[pos1[0]][pos1[1]]
 					weight2 = self.state[pos2[0]][pos2[1]]
 					returnList.append(min(weight1,weight2))
+
 		return returnList
 
 	def cost(self,row,col,move):
@@ -87,7 +89,7 @@ class board(object):
 	def ifValidMove(self,start_index,move):
 		# move: - up, + down
 		# we can only move queens
-		if not ifValidQueen(start_index[0],start_index[1]):
+		if not self.ifValidQueen(start_index[0],start_index[1]):
 			return False
 		# we cannot move out of boundary
 		if (start_index[0]+move)<0 or (start_index[1]+move)>self.height-1:
