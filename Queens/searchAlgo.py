@@ -96,13 +96,13 @@ def greedyHillClimb(start_board: board, h_type):
                               # current solution.
     cur_confidence = 0
     initial_temp = 30  # Starting temp for simulated annealing
-    best_solution = MoveList(copy.deepcopy(start_board.state))
+    best_solution = MoveList(copy.copy(start_board.state))
     cur_hval = start_board.heuristic(h_type)  # Heuristic function value of the start state
 
     # While we still have time and aren't confident that we found the optimal solution, keep trying
     while elapsed_time < deadline and cur_confidence < confidence_thresh:
         cur_solution = MoveList(best_solution.start_state)
-        start_board.state = copy.deepcopy(best_solution.start_state)
+        start_board.state = copy.copy(best_solution.start_state)
         num_sideways_moves = 0
         annealer = Annealer(initial_temp)
         num_iterations = 0
@@ -148,7 +148,7 @@ def greedyHillClimb(start_board: board, h_type):
             cur_confidence += 1
 
     # Done searching; generate dictionary of results
-    start_board.state = copy.deepcopy(best_solution.start_state)
+    start_board.state = copy.copy(best_solution.start_state)
     search_results = {
         "initBoard": start_board,
         "expandNodeCount": best_solution.num_nodes_expanded(),

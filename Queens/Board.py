@@ -38,6 +38,10 @@ class board(object):
         # 0 means empty
         # non zeros indicate weights^2 of queens
         self.state = state
+        self.prev_state = copy.copy(state)
+        lighter_attack_list = self.lighterAttackPieceList()
+        self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+        self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
         self.height = state.shape[0]
         self.width = state.shape[1]  # this is also #Queens
 
@@ -49,13 +53,23 @@ class board(object):
     # two heuristic values
     @property
     def h1(self):
-        lighter_attack_list = self.lighterAttackPieceList()
-        return min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+        if np.array_equal(self.state, self.prev_state):
+            return self._h1_stored
+        else:
+            self.prev_state = copy.copy(self.state)
+            lighter_attack_list = self.lighterAttackPieceList()
+            self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            return self._h1_stored
 
     @property
     def h2(self):
-        lighter_attack_list = self.lighterAttackPieceList()
-        return sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+        if np.array_equal(self.state, self.prev_state):
+            return self._h2_stored
+        else:
+            self.prev_state = copy.copy(self.state)
+            lighter_attack_list = self.lighterAttackPieceList()
+            self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            return self._h2_stored
 
     def ifAttack(self, index1, index2):
         # check if two pieces are attacking each other
@@ -127,7 +141,7 @@ class board(object):
                 if self.ifValidMove(pos, move):
                     row, col = pos
                     weight = self.state[row, col]
-                    new_state = copy.deepcopy(self.state)
+                    new_state = copy.copy(self.state)
 
                     new_state[row, col] = 0
                     new_state[row + move, col] = weight
