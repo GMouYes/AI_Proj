@@ -4,13 +4,14 @@ import copy
 
 
 def printBoard(boardState):
-    print(boardState.state)
+    print(np.sqrt(boardState.state).astype(int))
     return True
 
 
 def printMoves(moves):
     for move in moves:
-        print(move)
+        print(np.sqrt(move).astype(int))
+        print("")
     return True
 
 
