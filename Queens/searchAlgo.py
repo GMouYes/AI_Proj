@@ -6,42 +6,68 @@ import copy
 import time
 import random
 
+def tostring(state):
+    string = ""
+    for i in range(5):
+        for j in range(5):
+            if state[j, i] != 0:
+                string += str(j)
+                if i < 4:
+                    string += ','
+    return string
 
-def A_Star(start: board, h_type):
-    # sth to implement here
+def toboard(string):
+    pos = string.split(",")
+    weight = [81, 9, 1, 16, 4]
+    new_board = np.zeros((5, 5), int)
+    for i in range(5):
+        new_board[int(pos[i]), i] = weight[i]
+    return new_board
+
+def A_Star(start: board, h_type: str):
     frontier = PriorityQueue()
-    frontier.put((0, start))
+    frontier.put(start)
     came_from = dict()
     cost_so_far = dict()
-    came_from[start] = None
-    cost_so_far[start] = 0
-    cur_state = None
+    came_from[tostring(start.state)] = None
+    cost_so_far[tostring(start.state)] = 0
+    path = []
+    nodes_expanded = 0
+    result = dict()
+    result["initialBoard"] = start
 
     start_time = time.time()
 
     while not frontier.empty():
-        cur_state = frontier.get()[1]
+        cur_state = frontier.get()
+        cur_string = tostring(cur_state.state)
+        cur_time = time.time()
 
-        if cur_state.finished():
+        if cur_state.heuristic(h_type) == 0:
+            result["cost"] = cost_so_far[cur_string]
+            while not cur_string == tostring(start.state):
+                path.append(toboard(cur_string))
+                cur_string = came_from[cur_string]
+            path.append(start.state)
+            path.reverse()
+            result["elapsedTime"] = cur_time - start_time
+            result["sequence"] = path
+            result["expandNodeCount"] = nodes_expanded
             break
 
-        for next_state in cur_state.neighbors():
-            new_cost = cost_so_far[cur_state] + next_state[1]
-            if next_state[0] not in cost_so_far or new_cost < cost_so_far[next_state[0]]:
-                cost_so_far[next_state] = new_cost
-                priority = new_cost + next_state[0].heuristic(h_type)
-                frontier.put((priority, next_state))
-                came_from[next_state[0]] = cur_state
-
-    end_time = time.time()
-
-    path = []
-    while cur_state != start:
-        path.append(cur_state)
-        cur_state = came_from[cur_state]
-    path.append(start)
-    # please add the time elapsedtime to return statement
-    return path.reverse()
+        for next_state in cur_state.get_neighbors():
+            new_cost = cost_so_far[cur_string] + next_state[1]
+            state_string = tostring(next_state[0].state)
+            if state_string not in cost_so_far or new_cost < cost_so_far[state_string]:
+                nodes_expanded += 1
+                cost_so_far[state_string] = new_cost
+                next_state[0].priority = new_cost + next_state[0].heuristic(h_type)
+                frontier.put(next_state[0])
+                came_from[state_string] = tostring(cur_state.state)
+    print(result["elapsedTime"])
+    print(result["sequence"])
+    print(result["cost"])
+    return result
 
 
 class MoveList(object):
@@ -162,3 +188,4 @@ def greedyHillClimb(start_board: board, h_type):
         move_states.append(copy.copy(start_board.state))
     search_results["sequence"] = move_states
     return search_results
+

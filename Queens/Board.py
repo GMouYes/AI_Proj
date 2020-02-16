@@ -40,6 +40,7 @@ class board(object):
         # 0 means empty
         # non zeros indicate weights^2 of queens
         self.state = state
+        self.priority = 0
         self.prev_state = copy.copy(state)
         lighter_attack_list = self.lighterAttackPieceList()
         self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
@@ -174,3 +175,6 @@ class board(object):
                 move_list.append(move_dict)
             self.make_move(queen_pos[1], queen_pos[0])
         return move_list
+
+    def __lt__(self, other):
+        return self.priority < other.priority
