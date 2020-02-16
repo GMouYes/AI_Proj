@@ -155,6 +155,10 @@ def greedyHillClimb(start_board: board, h_type):
         "elapsedTime": best_solution.moves[-1]["elapsed_time"],
         "branchingFactor": best_solution.effective_branching_factor(),
         "cost": best_solution.cost(),
-        "sequence": best_solution.moves
     }
+    move_states = []
+    for move in best_solution.moves:
+        start_board.make_move(move["col"], move["end_pos"])
+        move_states.append(copy.copy(start_board.state))
+    search_results["sequence"] = move_states
     return search_results
