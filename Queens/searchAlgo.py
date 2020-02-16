@@ -64,9 +64,7 @@ def A_Star(start: board, h_type: str):
                 next_state[0].priority = new_cost + next_state[0].heuristic(h_type)
                 frontier.put(next_state[0])
                 came_from[state_string] = tostring(cur_state.state)
-    print(result["elapsedTime"])
-    print(result["sequence"])
-    print(result["cost"])
+
     return result
 
 
