@@ -14,7 +14,11 @@ def search(initBoard, searchType, heuristicFunc):
         "cost": None,
         "sequence": None,
     }
-    return searchResults
+
+    if searchType == "2":
+        return greedyHillClimb(initBoard, heuristicFunc)
+    else:
+        return A_Star(initBoard,heuristicFunc)
 
 
 def main():
@@ -27,8 +31,9 @@ def main():
     repeatChoice(initBoard, searchType, heuristicFunc)
 
     # please, make your returning searchResults a dic
-    # searchResults = search(initBoard,searchType,heuristicFunc)
-    # generateOutput(searchResults)
+    searchResults = search(initBoard,searchType,heuristicFunc)
+    #print(searchResults)
+    generateOutput(searchResults)
     return True
 
 

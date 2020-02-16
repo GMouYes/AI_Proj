@@ -9,8 +9,9 @@ def printBoard(boardState):
 
 
 def printMoves(moves):
-    # sth to implement here
-    pass
+    for move in moves:
+        print(move)
+    return True
 
 
 def readBoard(fileName):
@@ -141,7 +142,7 @@ class board(object):
                 if self.ifValidMove(pos, move):
                     row, col = pos
                     weight = self.state[row, col]
-                    new_state = copy.copy(self.state)
+                    new_state = copy.deepcopy(self.state)
 
                     new_state[row, col] = 0
                     new_state[row + move, col] = weight

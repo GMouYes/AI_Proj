@@ -7,7 +7,6 @@ def handleTime(elapsedTime):
 
 def generateOutput(searchResults):
 	print("Search Done! Generating output report ...")
-	print("")
 
 	print("The initial board state:")
 	printBoard(searchResults["initBoard"])
@@ -17,6 +16,7 @@ def generateOutput(searchResults):
 	print("Time elapsed:", handleTime(searchResults["elapsedTime"]))
 	print("Effective branching factor:", searchResults["branchingFactor"])
 	print("Cost of moves:", searchResults["cost"])
+	print("-------------------------------------------")
 	print("Seq of moves:")
 	printMoves(searchResults["sequence"])
 	print("")
