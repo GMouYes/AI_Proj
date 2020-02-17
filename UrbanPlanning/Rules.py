@@ -82,8 +82,10 @@ class Map(object):
 		cost_sum = 0
 		for zone in zoneList:
 			cost = self.mapState[zone.location]
-			if isinstance(cost,int):
-				cost_sum += cost
+			try:
+				cost_sum += (2+int(cost))
+			except Exception as e:
+				pass
 				
 		return cost_sum
 
