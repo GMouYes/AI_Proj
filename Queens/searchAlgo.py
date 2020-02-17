@@ -34,7 +34,8 @@ def A_Star(start: board, h_type: str):
     path = []
     nodes_expanded = 0
     result = dict()
-    result["initialBoard"] = start
+    result["initBoard"] = start
+    result["branchingFactor"] = 1
 
     start_time = time.time()
 
@@ -186,4 +187,6 @@ def greedyHillClimb(start_board: board, h_type):
         move_states.append(copy.copy(start_board.state))
     search_results["sequence"] = move_states
     return search_results
+
+
 
