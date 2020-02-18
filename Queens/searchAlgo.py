@@ -188,5 +188,14 @@ def greedyHillClimb(start_board: board, h_type):
     search_results["sequence"] = move_states
     return search_results
 
-
+# def main():
+#     a = readBoard("heavyqueensboard.csv")
+#     res = A_Star(a, "h1")
+#     print(res["cost"])
+#     print(res["initBoard"])
+#     print(res["sequence"])
+#
+#
+# if __name__ == '__main__':
+#     main()
 
