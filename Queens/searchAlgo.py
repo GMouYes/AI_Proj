@@ -6,31 +6,40 @@ import copy
 import time
 import random
 
-def tostring(state):
+def tostring(state, m, n):
     string = ""
-    for i in range(5):
-        for j in range(5):
+    for i in range(n):
+        for j in range(m):
             if state[j, i] != 0:
                 string += str(j)
                 if i < 4:
                     string += ','
     return string
 
-def toboard(string):
+def toboard(string, weight, m, n):
     pos = string.split(",")
-    weight = [81, 9, 1, 16, 4]
-    new_board = np.zeros((5, 5), int)
-    for i in range(5):
+    # weight = [81, 9, 1, 16, 4]
+    new_board = np.zeros((m, n), int)
+    for i in range(n):
         new_board[int(pos[i]), i] = weight[i]
     return new_board
 
 def A_Star(start: board, h_type: str):
+    # get the shape of board
+    m, n = np.shape(start.state)
+    # get the weight of each queen
+    weight = []
+    for i in range(n):
+        for j in range(m):
+            if start.state[j, i] != 0:
+                weight.append(start.state[j, i])
+
     frontier = PriorityQueue()
     frontier.put(start)
     came_from = dict()
     cost_so_far = dict()
-    came_from[tostring(start.state)] = None
-    cost_so_far[tostring(start.state)] = 0
+    came_from[tostring(start.state, m, n)] = None
+    cost_so_far[tostring(start.state, m, n)] = 0
     path = []
     nodes_expanded = 0
     result = dict()
@@ -41,13 +50,13 @@ def A_Star(start: board, h_type: str):
 
     while not frontier.empty():
         cur_state = frontier.get()
-        cur_string = tostring(cur_state.state)
+        cur_string = tostring(cur_state.state, m, n)
         cur_time = time.time()
 
         if cur_state.heuristic(h_type) == 0:
             result["cost"] = cost_so_far[cur_string]
-            while not cur_string == tostring(start.state):
-                path.append(toboard(cur_string))
+            while not cur_string == tostring(start.state, m, n):
+                path.append(toboard(cur_string, weight, m, n))
                 cur_string = came_from[cur_string]
             path.append(start.state)
             path.reverse()
@@ -58,13 +67,13 @@ def A_Star(start: board, h_type: str):
 
         for next_state in cur_state.get_neighbors():
             new_cost = cost_so_far[cur_string] + next_state[1]
-            state_string = tostring(next_state[0].state)
+            state_string = tostring(next_state[0].state, m, n)
             if state_string not in cost_so_far or new_cost < cost_so_far[state_string]:
                 nodes_expanded += 1
                 cost_so_far[state_string] = new_cost
                 next_state[0].priority = new_cost + next_state[0].heuristic(h_type)
                 frontier.put(next_state[0])
-                came_from[state_string] = tostring(cur_state.state)
+                came_from[state_string] = tostring(cur_state.state, m, n)
 
     return result
 
@@ -188,14 +197,5 @@ def greedyHillClimb(start_board: board, h_type):
     search_results["sequence"] = move_states
     return search_results
 
-# def main():
-#     a = readBoard("heavyqueensboard.csv")
-#     res = A_Star(a, "h1")
-#     print(res["cost"])
-#     print(res["initBoard"])
-#     print(res["sequence"])
-#
-#
-# if __name__ == '__main__':
-#     main()
+
 
