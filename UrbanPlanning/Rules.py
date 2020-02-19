@@ -1,3 +1,5 @@
+from InstanceTemplate import *
+
 def get_distance(loc1, loc2):  # manhattan distance
 	return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
 
@@ -7,8 +9,8 @@ class Site(object):
 	def __init__(self, name:str, score:dict, build_on_cost:int, location:tuple):
 		super(Site, self).__init__()
 		self.name = name
-		self.score = score
-		self.backupScore = score
+		self.score = {**score}
+		self.backupScore = {**score}
 		self.build_on_cost = build_on_cost
 		self.location = location
 
@@ -28,8 +30,6 @@ class Site(object):
 		return True
 
 	def recoverSite(self):
-		# please call this method whenever you tried to build on to recover
-		# or simply call this method anytime after calling zone.get_score
 		self.score = {**self.backupScore}
 		return True
 
@@ -62,16 +62,21 @@ class Map(object):
 		self.siteList = self.get_site_List()
 
 	def get_site_List(self):
-		# sth to implement here
-		return # this should return a list of sites, each an object of class Site
+		siteList = []
+		for row in range(self.mapState.shape[0]):
+			for col in range(self.mapState.shape[1]):
+				state = self.mapState[row,col]
+				if state in ["X","S"]:
+					siteList.append(createSite(siteName=state, location=(row,col)))
+		return siteList
 
-	def get_score(self, zoneList): 
+	def get_score(self, zoneList): # this is all you need
 		self.checkBuildOn(zoneList)
 		score = self.get_zone_zone_score(zoneList) + \
 				self.get_zone_site_score(self.siteList,zoneList) - \
 				self.get_zone_cost(zoneList)
 
-		for site in siteList:
+		for site in self.siteList:
 			site.recoverSite()
 		return score # the larger the better!!!
 
