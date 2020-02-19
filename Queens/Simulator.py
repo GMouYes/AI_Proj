@@ -32,7 +32,7 @@ def gen_random_board(size, skew=False):
     return new_board
 
 
-def simulate_greedy_hill_climbing(sizes, h_type, var_vals):
+def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=10):
     """
 
     :param sizes:
@@ -46,6 +46,7 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals):
     vars = var_vals.keys()
     vals = var_vals.values()
     result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "solved"] + list(vars)))
+    iteration = 0
     for size in sizes:
         board = gen_random_board(size, True)
         for val_combo in itertools.product(*vals):
@@ -54,18 +55,21 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals):
             result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "cost": result["cost"],
                            "solved": result["solved"]}
             result_dict.update(kw_dict)
-            print(result_dict)
+
+            if iteration % print_every_n_steps == 0:
+                print(result_dict)
             result_table = pd.concat([result_table, pd.DataFrame.from_dict([result_dict])])
+            iteration += 1
     return result_table
 
 
 def run_greedy_hill_climbing_simulation():
-    sizes = range(4, 11)
+    sizes = range(4, 8)
     h_type = "h1"
     param_dict = {
-        "confidence_thresh": range(1, 101, 5),
-        "max_sideways_moves": range(0, 101, 5),
-        "initial_temp": range(20, 101, 5),
+        "confidence_thresh": range(1, 101, 10),
+        "max_sideways_moves": range(0, 101, 10),
+        "initial_temp": range(20, 101, 10),
         "cooling_schedule": ["log"],
         "cooling_param": range(2, 11)
     }
