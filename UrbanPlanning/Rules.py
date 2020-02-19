@@ -1,24 +1,24 @@
 def get_distance(loc1, loc2):  # manhattan distance
 	return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
 
-
 class Site(object):
 	"""docstring for Site"""
 
-	def __init__(self, name: str, score: dict, build_on: dict, location: tuple):
+	def __init__(self, name:str, score:dict, build_on_cost:int, location:tuple):
 		super(Site, self).__init__()
 		self.name = name
 		self.score = score
-		self.build_on = build_on
+		self.backupScore = score
+		self.build_on_cost = build_on_cost
 		self.location = location
 
 	def get_score(self, newZone):
 		distance = get_distance(self.location, newZone.location)
 
-		if distance > self.score[newZone.name]["distance"]:
-			return 0  # out of range
-		elif distance == 0:
-			return self.buildOnCost()
+		if distance == 0:
+			return self.build_on_cost
+		elif distance > self.score[newZone.name]["distance"]:
+			return 0  # not in range
 		else:
 			return self.score[newZone.name]["score"]
 
@@ -27,12 +27,11 @@ class Site(object):
 			self.score[zoneName]["score"] = 0  # update to destroy
 		return True
 
-	def buildOnCost(self):
-		if not self.build_on["flag"]:
-			return -1e6  # an extremely large cost
-		else:
-			return self.build_on["cost"]
-
+	def recoverSite(self):
+		# please call this method whenever you tried to build on to recover
+		# or simply call this method anytime after calling zone.get_score
+		self.score = {**self.backupScore}
+		return True
 
 class Zone(object):
 	"""docstring for zone"""
@@ -66,10 +65,15 @@ class Map(object):
 		# sth to implement here
 		return # this should return a list of sites, each an object of class Site
 
-	def get_score(self, zoneList):
+	def get_score(self, zoneList): 
 		self.checkBuildOn(zoneList)
-		return self.get_zone_zone_score(zoneList) + self.get_zone_site_score(self.siteList,
-																			 zoneList) - self.get_zone_cost(zoneList)
+		score = self.get_zone_zone_score(zoneList) + \
+				self.get_zone_site_score(self.siteList,zoneList) - \
+				self.get_zone_cost(zoneList)
+
+		for site in siteList:
+			site.recoverSite()
+		return score # the larger the better!!!
 
 	def get_zone_zone_score(self, zoneList):
 		return sum([sum([zone1.get_score(zone2) for zone2 in zoneList] for zone1 in zoneList)])
