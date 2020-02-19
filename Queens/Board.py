@@ -42,25 +42,31 @@ class board(object):
         self.state = state
         self.priority = 0
         self.prev_state = copy.copy(state)
-        lighter_attack_list = self.lighterAttackPieceList()
-        self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-        self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-        self.height = state.shape[0]
-        self.width = state.shape[1]  # this is also #Queens
+        if state is not None:
+            lighter_attack_list = self.attackPieceList(min)
+            self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            heavier_attack_list = self.attackPieceList(max)
+            self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
+            self._height = state.shape[0]
+            self._width = state.shape[1]  # this is also #Queens
+        else:
+            self._width = None
+            self._height = None
 
     # position of all queens
     @property
     def queenPos(self):
         return np.argwhere(self.state > 0)
 
-    # two heuristic values
+    # three heuristic values
     @property
     def h1(self):
         if np.array_equal(self.state, self.prev_state):
             return self._h1_stored
         else:
             self.prev_state = copy.copy(self.state)
-            lighter_attack_list = self.lighterAttackPieceList()
+            lighter_attack_list = self.attackPieceList(min)
             self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             return self._h1_stored
 
@@ -70,9 +76,31 @@ class board(object):
             return self._h2_stored
         else:
             self.prev_state = copy.copy(self.state)
-            lighter_attack_list = self.lighterAttackPieceList()
+            lighter_attack_list = self.attackPieceList(min)
             self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             return self._h2_stored
+
+    @property
+    def h3(self):
+        if np.array_equal(self.state, self.prev_state):
+            return self._h3_stored
+        else:
+            self.prev_state = copy.copy(self.state)
+            heavier_attack_list = self.attackPieceList(max)
+            self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
+            return self._h3_stored
+
+    @property
+    def height(self):
+        if self._height is None and self.state is not None:
+            self._height = self.state.shape[0]
+        return self._height
+
+    @property
+    def width(self):
+        if self._width is None and self.state is not None:
+            self._width = self.state.shape[1]
+        return self._width
 
     def ifAttack(self, index1, index2):
         # check if two pieces are attacking each other
@@ -96,7 +124,7 @@ class board(object):
         # check if the given position has a queen
         return True if self.state[row, col] > 0 else False
 
-    def lighterAttackPieceList(self):
+    def attackPieceList(self, compare_func):
         # returns the list of lighter weight^2 of all attacking pairs
         returnList = []
         for index1 in range(self.queenPos.shape[0]):
@@ -106,7 +134,7 @@ class board(object):
                 if self.ifAttack(pos1, pos2):
                     weight1 = self.state[pos1[0], pos1[1]]
                     weight2 = self.state[pos2[0], pos2[1]]
-                    returnList.append(min(weight1, weight2))
+                    returnList.append(compare_func(weight1, weight2))
         return returnList
 
     def cost(self, row, col, move):
@@ -134,8 +162,10 @@ class board(object):
     def heuristic(self, h_type):
         if h_type == "h1":
             return self.h1
-        else:
+        elif h_type == "h2":
             return self.h2
+        else:
+            return self.h3
 
     def get_neighbors(self):
         returnList = []
@@ -161,7 +191,7 @@ class board(object):
             return True
 
     def get_neighbors_in_place(self, h_type):
-        # return a list of dicts. all we care about currently is the column, start, stop, and heuristic values
+        # return a list of dicts. all we care about currently is the column, start, stop, cost, and heuristic values
         move_list = []
         for queen_pos in self.queenPos:
             valid_moves = set(range(self.width)) - {queen_pos[0]}

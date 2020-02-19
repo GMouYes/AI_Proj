@@ -6,6 +6,7 @@ import copy
 import time
 import random
 
+
 def tostring(state, m, n):
     string = ""
     for i in range(n):
@@ -16,6 +17,7 @@ def tostring(state, m, n):
                     string += ','
     return string
 
+
 def toboard(string, weight, m, n):
     pos = string.split(",")
     # weight = [81, 9, 1, 16, 4]
@@ -23,6 +25,7 @@ def toboard(string, weight, m, n):
     for i in range(n):
         new_board[int(pos[i]), i] = weight[i]
     return new_board
+
 
 def A_Star(start: board, h_type: str):
     # get the shape of board
@@ -108,6 +111,10 @@ class Annealer(object):
     def cooling_schedule_log(self, timestep, base=np.e):
         self.temp = self.initial_temp/math.log(timestep + base, base)
 
+    def cooling_schedule_geometric(self, timestep, ratio=0.7):
+        if timestep > 0:
+            self.temp *= ratio
+
     def jump_probability(self, old_val, new_val, cooling_schedule, timestep, free_param):
         if new_val <= old_val:
             jump_prob = 1
@@ -117,32 +124,37 @@ class Annealer(object):
         return jump_prob
 
 
-def greedyHillClimb(start_board: board, h_type):
+def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=100,
+                    max_sideways_moves=100, initial_temp=30, cooling_schedule="log", cooling_param=math.e):
     # Do some initial setup here
     start_time = time.time()
     elapsed_time = 0
-    deadline = 10  # Seconds before we run out of time
+    # deadline = 10  # Seconds before we run out of time
 
-    confidence_thresh = 100  # Alternatively, we terminate if we fail to find a better solution in confidence_thresh
+    # confidence_thresh = 100  # Alternatively, we terminate if we fail to find a better solution in confidence_thresh
                              # tries.
 
-    max_sideways_moves = 100  # For a given iteration, how many sideways moves are allowed before we accept the
+    # max_sideways_moves = 100  # For a given iteration, how many sideways moves are allowed before we accept the
                               # current solution.
     cur_confidence = 0
-    initial_temp = 30  # Starting temp for simulated annealing
+    # initial_temp = 30  # Starting temp for simulated annealing
+    annealer = Annealer(initial_temp)
+    cooling_func = annealer.cooling_schedule_log if cooling_schedule == "log" else annealer.cooling_schedule_geometric
     best_solution = MoveList(copy.copy(start_board.state))
-    cur_hval = start_board.heuristic(h_type)  # Heuristic function value of the start state
+    start_hval = start_board.heuristic(h_type)  # Heuristic function value of the start state
+    nodes_expanded_total = 0
+    branching_factors = []
 
     # While we still have time and aren't confident that we found the optimal solution, keep trying
     while elapsed_time < deadline and cur_confidence < confidence_thresh:
         cur_solution = MoveList(best_solution.start_state)
+        cur_hval = start_hval
         start_board.state = copy.copy(best_solution.start_state)
         num_sideways_moves = 0
-        annealer = Annealer(initial_temp)
         num_iterations = 0
 
         # Three possible scenarios for us to stop: we run out of time, we find a solution, or we get stuck
-        while elapsed_time < deadline and cur_hval > 0 and num_sideways_moves < max_sideways_moves:
+        while elapsed_time < deadline and cur_hval > 0 and num_sideways_moves <= max_sideways_moves:
             # Get available moves from the current state
             neighbors = start_board.get_neighbors_in_place(h_type)
 
@@ -154,8 +166,7 @@ def greedyHillClimb(start_board: board, h_type):
             choice = random.choice(candidate_moves)
 
             # Make a decision based on simulated annealing
-            jump_prob = annealer.jump_probability(cur_hval, min_hval, annealer.cooling_schedule_log, num_iterations,
-                                                  math.e)
+            jump_prob = annealer.jump_probability(cur_hval, min_hval, cooling_func, num_iterations, cooling_param)
             jump = random.choices([True, False], weights=[jump_prob, 1 - jump_prob])[0]
 
             if jump:
@@ -165,6 +176,7 @@ def greedyHillClimb(start_board: board, h_type):
                     num_sideways_moves = 0
                 cur_hval = min_hval
                 choice["nodes_expanded"] = len(neighbors)
+                nodes_expanded_total += len(neighbors)
                 cur_solution.moves.append(choice)
                 start_board.make_move(choice["col"], choice["end_pos"])
             # If we didn't jump stay where we are. Eventually we will go somewhere worse, or stop in the current state
@@ -180,15 +192,17 @@ def greedyHillClimb(start_board: board, h_type):
         # If not, we become more confident our current best is the global optimum
         else:
             cur_confidence += 1
+        branching_factors.append(cur_solution.effective_branching_factor())
 
     # Done searching; generate dictionary of results
     start_board.state = copy.copy(best_solution.start_state)
     search_results = {
         "initBoard": start_board,
-        "expandNodeCount": best_solution.num_nodes_expanded(),
-        "elapsedTime": best_solution.moves[-1]["elapsed_time"],
-        "branchingFactor": best_solution.effective_branching_factor(),
+        "expandNodeCount": nodes_expanded_total,
+        "elapsedTime": elapsed_time,
+        "branchingFactor": np.mean(branching_factors),
         "cost": best_solution.cost(),
+        "solved": len(best_solution.moves) > 0 and best_solution.moves[-1]["function_value"] == 0
     }
     move_states = []
     for move in best_solution.moves:
