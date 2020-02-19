@@ -3,6 +3,27 @@ from InstanceTemplate import *
 def get_distance(loc1, loc2):  # manhattan distance
 	return abs(loc1[0] - loc2[0]) + abs(loc1[1] - loc2[1])
 
+def countZone(zoneType, zoneList):
+	return sum([zone.name == zoneType for zone in zoneList])
+
+def ifValidZoneList(zoneList, maxIndustrial, maxCommercial, maxIndustrial):
+	# check if it exceed limit
+	if countZone(zoneType="I",zoneList) > maxIndustrial:
+		return False
+	if countZone(zoneType="R",zoneList) > maxResidential:
+		return False
+	if countZone(zoneType="C",zoneList) > maxCommercial:
+		return False
+
+	# check if two zone at same location
+	length = len(zoneList)
+	for index1 in range(length):
+		for index2 in range(index1,length):
+			if zoneList[index1].location == zoneList[index2].location:
+				return False
+
+	return True
+
 class Site(object):
 	"""docstring for Site"""
 
@@ -56,10 +77,13 @@ class Zone(object):
 class Map(object):
 	"""docstring for Map"""
 
-	def __init__(self, mapState):
+	def __init__(self, mapState, maxIndustrial, maxCommercial, maxResidential):
 		super(Map, self).__init__()
 		self.mapState = mapState  # a 2D numpy matrix
 		self.siteList = self.get_site_List()
+		self.maxIndustrial = maxIndustrial
+		self.maxCommercial = maxCommercial
+		self.maxResidential = maxResidential
 
 	def get_site_List(self):
 		siteList = []
