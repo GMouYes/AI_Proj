@@ -60,10 +60,11 @@ class Map(object):
     def __init__(self, mapState):
         super(Map, self).__init__()
         self.mapState = mapState  # a 2D numpy matrix
+    	self.siteList = self.get_site_List()
 
     def get_site_List(self):
         # sth to implement here
-        return self.siteList
+        return # this should return a list of sites, each an object of class Site
 
     def get_score(self, zoneList):
         self.checkBuildOn(zoneList)
