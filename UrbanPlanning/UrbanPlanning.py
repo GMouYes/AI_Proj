@@ -3,12 +3,12 @@ from HandleOutput import *
 from algo import *
 from Rules import *
 
-import sys
 import numpy as np
 
 
 def main():
-	pass
+	readInput()
+	return True
 
 if __name__ == '__main__':
 	main()
