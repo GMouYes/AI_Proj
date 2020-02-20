@@ -97,7 +97,7 @@ class Map(object):
 	def get_score(self, zoneList): # this is all you need
 		self.checkBuildOn(zoneList)
 		score = self.get_zone_zone_score(zoneList) + \
-				self.get_zone_site_score(self.siteList,zoneList) - \
+				self.get_zone_site_score(zoneList) - \
 				self.get_zone_cost(zoneList)
 
 		for site in self.siteList:
