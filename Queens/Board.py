@@ -65,9 +65,13 @@ class board(object):
         if np.array_equal(self.state, self.prev_state):
             return self._h1_stored
         else:
-            self.prev_state = copy.copy(self.state)
             lighter_attack_list = self.attackPieceList(min)
+            if self.prev_state is None:
+                self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                heavier_attack_list = self.attackPieceList(max)
+                self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
             self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            self.prev_state = copy.copy(self.state)
             return self._h1_stored
 
     @property
@@ -75,9 +79,13 @@ class board(object):
         if np.array_equal(self.state, self.prev_state):
             return self._h2_stored
         else:
-            self.prev_state = copy.copy(self.state)
             lighter_attack_list = self.attackPieceList(min)
+            if self.prev_state is None:
+                self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                heavier_attack_list = self.attackPieceList(max)
+                self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
             self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            self.prev_state = copy.copy(self.state)
             return self._h2_stored
 
     @property
@@ -85,9 +93,13 @@ class board(object):
         if np.array_equal(self.state, self.prev_state):
             return self._h3_stored
         else:
-            self.prev_state = copy.copy(self.state)
             heavier_attack_list = self.attackPieceList(max)
+            if self.prev_state is None:
+                lighter_attack_list = self.attackPieceList(min)
+                self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
+            self.prev_state = copy.copy(self.state)
             return self._h3_stored
 
     @property

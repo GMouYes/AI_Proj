@@ -124,8 +124,8 @@ class Annealer(object):
         return jump_prob
 
 
-def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=100,
-                    max_sideways_moves=100, initial_temp=30, cooling_schedule="log", cooling_param=math.e):
+def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=40,
+                    max_sideways_moves=20, initial_temp=40, cooling_schedule="log", cooling_param=math.e):
     # Do some initial setup here
     start_time = time.time()
     elapsed_time = 0

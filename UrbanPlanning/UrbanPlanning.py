@@ -7,19 +7,22 @@ from InstanceTemplate import *
 import numpy as np
 
 def search(targetMap,searchType):
-	if searchType == "ga":
-		result = Genetic(targetMap)
-	else:
-		#result = HillClimbing(targetMap)
-	return Result
+    if searchType == "ga":
+        result = genetic(targetMap)
+    else:
+        pass
+        #result = HillClimbing(targetMap)
+    return result
+
 
 def main():
-	industrial, commercial, residential, siteMap, searchType = readInput()
-	targetMap = Map(mapState=siteMap, maxIndustrial=industrial, maxCommercial=commercial, maxResidential=residential)
-	result = search(targetMap,searchType)
-	# output not done yet
+    industrial, commercial, residential, siteMap, searchType = readInput()
+    targetMap = Map(mapState=siteMap, maxIndustrial=industrial, maxCommercial=commercial, maxResidential=residential)
+    result = search(targetMap, searchType)
+    # output not done yet
 
-	return True
+    return True
+
 
 if __name__ == '__main__':
-	main()
+    main()
