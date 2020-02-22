@@ -46,8 +46,18 @@ class board(object):
             lighter_attack_list = self.attackPieceList(min)
             self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-            heavier_attack_list = self.attackPieceList(max)
-            self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
+            diag_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "diagonal"]
+            horiz_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "horizontal"]
+            if len(diag_attacks) == 0:
+                self._h3_stored = min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks) if \
+                    len(lighter_attack_list) > 0 else 0
+            elif len(horiz_attacks) == 0:
+                self._h3_stored = min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks) if \
+                    len(lighter_attack_list) > 0 else 0
+            else:
+                self._h3_stored = min(min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks),
+                                      min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks)) if \
+                    len(lighter_attack_list) > 0 else 0
             self._height = state.shape[0]
             self._width = state.shape[1]  # this is also #Queens
         else:
@@ -67,10 +77,22 @@ class board(object):
         else:
             lighter_attack_list = self.attackPieceList(min)
             if self.prev_state is None:
-                self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-                heavier_attack_list = self.attackPieceList(max)
-                self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
-            self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                self._h2_stored = sum(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                diag_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "diagonal"]
+                horiz_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "horizontal"]
+                if len(diag_attacks) == 0 and len(horiz_attacks) > 0:
+                    self._h3_stored = min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks) if \
+                        len(lighter_attack_list) > 0 else 0
+                elif len(horiz_attacks) == 0 and len(diag_attacks) > 0:
+                    self._h3_stored = min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks) if \
+                        len(lighter_attack_list) > 0 else 0
+                elif len(diag_attacks) == 0 and len(horiz_attacks) == 0:
+                    self._h3_stored = 0
+                else:
+                    self._h3_stored = min(min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks),
+                                          min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks)) if \
+                        len(lighter_attack_list) > 0 else 0
+            self._h1_stored = min(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             self.prev_state = copy.copy(self.state)
             return self._h1_stored
 
@@ -81,10 +103,22 @@ class board(object):
         else:
             lighter_attack_list = self.attackPieceList(min)
             if self.prev_state is None:
-                self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-                heavier_attack_list = self.attackPieceList(max)
-                self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
-            self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                self._h1_stored = min(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                diag_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "diagonal"]
+                horiz_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "horizontal"]
+                if len(diag_attacks) == 0 and len(horiz_attacks) > 0:
+                    self._h3_stored = min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks) if \
+                        len(lighter_attack_list) > 0 else 0
+                elif len(horiz_attacks) == 0 and len(diag_attacks) > 0:
+                    self._h3_stored = min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks) if \
+                        len(lighter_attack_list) > 0 else 0
+                elif len(diag_attacks) == 0 and len(horiz_attacks) == 0:
+                    self._h3_stored = 0
+                else:
+                    self._h3_stored = min(min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks),
+                                          min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks)) if \
+                        len(lighter_attack_list) > 0 else 0
+            self._h2_stored = sum(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             self.prev_state = copy.copy(self.state)
             return self._h2_stored
 
@@ -93,12 +127,24 @@ class board(object):
         if np.array_equal(self.state, self.prev_state):
             return self._h3_stored
         else:
-            heavier_attack_list = self.attackPieceList(max)
+            lighter_attack_list = self.attackPieceList(min)
             if self.prev_state is None:
-                lighter_attack_list = self.attackPieceList(min)
-                self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-                self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-            self._h3_stored = min(heavier_attack_list) if len(heavier_attack_list) > 0 else 0
+                self._h1_stored = min(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+                self._h2_stored = sum(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            diag_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "diagonal"]
+            horiz_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "horizontal"]
+            if len(diag_attacks) == 0 and len(horiz_attacks) > 0:
+                self._h3_stored = min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks) if \
+                    len(lighter_attack_list) > 0 else 0
+            elif len(horiz_attacks) == 0 and len(diag_attacks) > 0:
+                self._h3_stored = min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks) if \
+                    len(lighter_attack_list) > 0 else 0
+            elif len(diag_attacks) == 0 and len(horiz_attacks) == 0:
+                self._h3_stored = 0
+            else:
+                self._h3_stored = min(min(diag_attacks if len(diag_attacks) > 0 else 0) * len(diag_attacks),
+                                      min(horiz_attacks if len(horiz_attacks) > 0 else 0) * len(horiz_attacks)) if \
+                    len(lighter_attack_list) > 0 else 0
             self.prev_state = copy.copy(self.state)
             return self._h3_stored
 
@@ -146,7 +192,11 @@ class board(object):
                 if self.ifAttack(pos1, pos2):
                     weight1 = self.state[pos1[0], pos1[1]]
                     weight2 = self.state[pos2[0], pos2[1]]
-                    returnList.append(compare_func(weight1, weight2))
+                    if pos1[0] != pos2[0]:
+                        attack_type = "diagonal"
+                    else:
+                        attack_type = "horizontal"
+                    returnList.append((compare_func(weight1, weight2), attack_type))
         return returnList
 
     def cost(self, row, col, move):

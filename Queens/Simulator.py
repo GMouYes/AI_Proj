@@ -64,14 +64,14 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=1
 
 
 def run_greedy_hill_climbing_simulation():
-    sizes = [5]
+    sizes = [4]
     h_type = "h1"
     param_dict = {
-        "confidence_thresh": range(1, 101, 10),
-        "max_sideways_moves": range(0, 101, 10),
-        "initial_temp": range(20, 101, 10),
-        "cooling_schedule": ["log"],
-        "cooling_param": np.arange(2, 10, 1)
+        # "confidence_thresh": range(10, 101, 10),
+        # "max_sideways_moves": range(0, 101, 10),
+        "initial_temp": range(10, 101, 10),
+        "cooling_schedule": ["geom"],
+        "cooling_param": np.arange(0.1, 1, 0.1)
     }
     return simulate_greedy_hill_climbing(sizes, h_type, param_dict)
 

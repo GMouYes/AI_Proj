@@ -124,20 +124,13 @@ class Annealer(object):
         return jump_prob
 
 
-def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=40,
-                    max_sideways_moves=20, initial_temp=40, cooling_schedule="log", cooling_param=math.e):
+def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=100,
+                    max_sideways_moves=100, initial_temp=80, cooling_schedule="geom", cooling_param=0.4):
+    start_board_copy = copy.copy(start_board)
     # Do some initial setup here
     start_time = time.time()
     elapsed_time = 0
-    # deadline = 10  # Seconds before we run out of time
-
-    # confidence_thresh = 100  # Alternatively, we terminate if we fail to find a better solution in confidence_thresh
-                             # tries.
-
-    # max_sideways_moves = 100  # For a given iteration, how many sideways moves are allowed before we accept the
-                              # current solution.
     cur_confidence = 0
-    # initial_temp = 30  # Starting temp for simulated annealing
     annealer = Annealer(initial_temp)
     cooling_func = annealer.cooling_schedule_log if cooling_schedule == "log" else annealer.cooling_schedule_geometric
     best_solution = MoveList(copy.copy(start_board.state))
@@ -159,22 +152,23 @@ def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=4
             neighbors = start_board.get_neighbors_in_place(h_type)
 
             # Get min-valued successors here
-            min_hval = min(neighbor["function_value"] for neighbor in neighbors)
-            candidate_moves = [move for _, move in enumerate(neighbors) if move["function_value"] == min_hval]
+            # min_hval = min(neighbor["function_value"] for neighbor in neighbors)
+            # candidate_moves = [move for _, move in enumerate(neighbors) if move["function_value"] == min_hval]
 
             # Choose a candidate
-            choice = random.choice(candidate_moves)
+            choice = random.choice(neighbors)
 
             # Make a decision based on simulated annealing
-            jump_prob = annealer.jump_probability(cur_hval, min_hval, cooling_func, num_iterations, cooling_param)
-            jump = random.choices([True, False], weights=[jump_prob, 1 - jump_prob])[0]
+            jump_prob = annealer.jump_probability(cur_hval, choice["function_value"], cooling_func, num_iterations,
+                                                  cooling_param)
+            jump = True if random.random() <= jump_prob else False
 
             if jump:
-                if cur_hval == min_hval:
+                if cur_hval == choice["function_value"]:
                     num_sideways_moves += 1
                 else:
                     num_sideways_moves = 0
-                cur_hval = min_hval
+                cur_hval = choice["function_value"]
                 choice["nodes_expanded"] = len(neighbors)
                 nodes_expanded_total += len(neighbors)
                 cur_solution.moves.append(choice)
@@ -195,9 +189,8 @@ def greedyHillClimb(start_board: board, h_type, deadline=10, confidence_thresh=4
         branching_factors.append(cur_solution.effective_branching_factor())
 
     # Done searching; generate dictionary of results
-    start_board.state = copy.copy(best_solution.start_state)
     search_results = {
-        "initBoard": start_board,
+        "initBoard": start_board_copy,
         "expandNodeCount": nodes_expanded_total,
         "elapsedTime": elapsed_time,
         "branchingFactor": np.mean(branching_factors),
