@@ -18,6 +18,8 @@ def ifValidZoneList(zoneList, urbanmap):
         return False
     if countZone("C", zoneList) > urbanmap.maxCommercial:
         return False
+    # if countZone("I", zoneList)+countZone("R", zoneList)+countZone("C", zoneList) == 0:
+    #     return False
 
     # Check if there are areas available for building
     siteList = urbanmap.siteList
@@ -147,6 +149,9 @@ class Zone(object):
         self.name = name
         self.score = score
         self.location = location
+
+    def __lt__(self, other):
+        return self.location[0] < other.location[0]
 
     def get_score(self, newZone):
         distance = get_distance(self.location, newZone.location)

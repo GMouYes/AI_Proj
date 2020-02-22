@@ -40,6 +40,8 @@ def crossover(father: list, mother: list, n: int):
 
 
 def mutation(zones: list, m: int, n: int, num_of_mutation: int):
+    if len(zones) == 0:
+        return zones
     mutation_indices = random.sample(range(len(zones)), num_of_mutation)
     for index in mutation_indices:
         random_location = (np.random.randint(0, m), np.random.randint(0, n))
@@ -47,13 +49,14 @@ def mutation(zones: list, m: int, n: int, num_of_mutation: int):
     return zones
 
 
-def genetic(urbanmap: Map, k1: int, k2: int, k3: int):
+def genetic(urbanmap: Map, k1: int, k2: int, k3: int, max_iteration: int):
     maxi, maxc, maxr = urbanmap.maxIndustrial, urbanmap.maxCommercial, urbanmap.maxResidential
     m, n = np.shape(urbanmap.mapState)
     prev_best = float('-inf')
     population = []
     count = 0
 
+    start_time = time.time()
     # initialize population
     while len(population) < k1:
         zones = generateZones(m, n, maxi, maxc, maxr)
@@ -61,14 +64,14 @@ def genetic(urbanmap: Map, k1: int, k2: int, k3: int):
             population.append((urbanmap.get_score(zones), zones))
 
     # start genetic iteration
-    while count <= 5:
+    while count <= max_iteration:
         parents = heapq.nlargest(k1 - k3, population)
         population = heapq.nlargest(k2, population)
         while len(population) < k1:
-            father = random.choice(parents, cum_weights=[parent[0] for parent in parents])
-            mother = random.choice(parents, cum_weights=[parent[0] for parent in parents])
+            father = random.choices(population=parents, k=1)[0]
+            mother = random.choices(population=parents, k=1)[0]
             while father[1] == mother[1]:
-                mother = random.choice(parents, cum_weights=[parent[0] for parent in parents])
+                mother = random.choices(population=parents, k=1)[0]
             child1, child2 = crossover(father[1], mother[1], n)
             num_of_mutation = 1
             child1 = mutation(child1, m, n, num_of_mutation)
@@ -83,7 +86,9 @@ def genetic(urbanmap: Map, k1: int, k2: int, k3: int):
             count += 1
         prev_best = max(population)[0]
 
-    return prev_best
+    end_time = time.time()
+
+    return prev_best, max(population)[1], end_time-start_time
 
 
 class MoveList(object):
@@ -211,3 +216,5 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
         start_map.mapState[zone.location[0], zone.location[1]] = zone.name
     search_results["finalMap"] = start_map.mapState
     return search_results
+
+
