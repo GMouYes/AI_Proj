@@ -11,6 +11,11 @@ def handleTime(elapsedTime):
 def generateOutput(searchResults):
     print("Search Done! Generating output report ...")
 
+    if "solved" in searchResults:
+        if searchResults["solved"]:
+            print("\nSolution found for greedy hill climbing! :D\n")
+        else:
+            print("\nSolution NOT found for greedy hill climbing! :(\n")
     print("The initial board state:")
     printBoard(searchResults["initBoard"])
     print("")
