@@ -160,7 +160,7 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
         # Two possible scenarios for us to stop: we run out of time, or we get stuck
         while elapsed_time < deadline and num_sideways_moves <= max_sideways_moves:
             # Get available moves from the current state
-            neighbors, zone_list = Rules.get_neighbors(zone_list, start_map)
+            neighbors = Rules.get_neighbors(zone_list, start_map)
 
             # Get min-valued successors here
             # min_hval = min(neighbor["function_value"] for neighbor in neighbors)
@@ -181,7 +181,6 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
                     num_sideways_moves = 0
                 cur_score = choice["score"]
                 choice["nodes_expanded"] = len(neighbors)
-                choice["zone_list"] = zone_list
                 nodes_expanded_total += len(neighbors)
                 cur_solution.moves.append(choice)
             # If we didn't jump stay where we are. Eventually we will go somewhere worse, or stop in the current state

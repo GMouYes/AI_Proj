@@ -105,7 +105,7 @@ def get_neighbors(zone_list, urbanmap):
                         }
                         neighbors.append(move)
 
-    return neighbors, zone_list
+    return neighbors
 
 
 class Site(object):
