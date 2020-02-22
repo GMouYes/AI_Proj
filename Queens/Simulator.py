@@ -32,7 +32,7 @@ def gen_random_board(size, skew=False):
     return new_board
 
 
-def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=10):
+def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=10, replications=10):
     """
 
     :param sizes:
@@ -47,8 +47,12 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=1
     vals = var_vals.values()
     result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "solved"] + list(vars)))
     iteration = 0
+    sizes = sorted(sizes * replications)
+    cur_size = sizes[0]
+    board = gen_random_board(cur_size, True)
     for size in sizes:
-        board = gen_random_board(size, True)
+        if size != cur_size:
+            board = gen_random_board(size, True)
         for val_combo in itertools.product(*vals):
             kw_dict = dict(zip(vars, val_combo))
             result = searchAlgo.greedyHillClimb(copy.copy(board), h_type, **kw_dict)
@@ -60,6 +64,7 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=1
                 print(result_dict)
             result_table = pd.concat([result_table, pd.DataFrame.from_dict([result_dict])])
             iteration += 1
+        cur_size = size
     return result_table
 
 
@@ -70,8 +75,8 @@ def run_greedy_hill_climbing_simulation():
         # "confidence_thresh": range(10, 101, 10),
         # "max_sideways_moves": range(0, 101, 10),
         "initial_temp": range(10, 101, 10),
-        "cooling_schedule": ["log"],
-        "cooling_param": np.arange(2, 11, 1)
+        "cooling_schedule": ["geom"],
+        "cooling_param": np.arange(0.1, 1.1, 0.1)
     }
     return simulate_greedy_hill_climbing(sizes, h_type, param_dict)
 

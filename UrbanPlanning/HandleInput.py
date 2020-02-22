@@ -67,7 +67,7 @@ def readInput():
         formatError()
         return False
 
-    if searchType not in ["hc", "ga"]:
+    if searchType not in ["hc", "ga", "hcsg"]:
         formatError()
         return False
 
