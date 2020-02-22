@@ -23,7 +23,7 @@ def generateZones(m: int, n: int, maxi: int, maxc: int, maxr: int):
 
 
 def crossover(father: list, mother: list, n: int):
-    cutpoint = np.random.randint(0, n)
+    cutpoint = np.random.randint(0, n-1)
     child1, child2 = [], []
     for zone in father:
         if zone.location[1] <= cutpoint:
@@ -49,7 +49,7 @@ def mutation(zones: list, m: int, n: int, num_of_mutation: int):
     return zones
 
 
-def genetic(urbanmap: Map, k1: int, k2: int, k3: int, max_iteration: int):
+def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutation=1):
     maxi, maxc, maxr = urbanmap.maxIndustrial, urbanmap.maxCommercial, urbanmap.maxResidential
     m, n = np.shape(urbanmap.mapState)
     prev_best = float('-inf')
@@ -73,7 +73,6 @@ def genetic(urbanmap: Map, k1: int, k2: int, k3: int, max_iteration: int):
             while father[1] == mother[1]:
                 mother = random.choices(population=parents, k=1)[0]
             child1, child2 = crossover(father[1], mother[1], n)
-            num_of_mutation = 1
             child1 = mutation(child1, m, n, num_of_mutation)
             child2 = mutation(child2, m, n, num_of_mutation)
             if ifValidZoneList(child1, urbanmap):

@@ -18,8 +18,6 @@ def ifValidZoneList(zoneList, urbanmap):
         return False
     if countZone("C", zoneList) > urbanmap.maxCommercial:
         return False
-    # if countZone("I", zoneList)+countZone("R", zoneList)+countZone("C", zoneList) == 0:
-    #     return False
 
     # Check if there are areas available for building
     siteList = urbanmap.siteList
