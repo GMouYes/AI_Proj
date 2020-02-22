@@ -180,7 +180,7 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
             # Make a decision based on simulated annealing
             jump_prob = annealer.jump_probability(cur_score, choice["score"], cooling_func, num_iterations,
                                                   cooling_param)
-            jump = random.choices([True, False], weights=[jump_prob, 1 - jump_prob])[0]
+            jump = True if random.random() <= jump_prob else False
 
             if jump:
                 if cur_score == choice["score"]:

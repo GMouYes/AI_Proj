@@ -44,8 +44,8 @@ class board(object):
         self.prev_state = copy.copy(state)
         if state is not None:
             lighter_attack_list = self.attackPieceList(min)
-            self._h1_stored = min(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
-            self._h2_stored = sum(lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            self._h1_stored = min(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
+            self._h2_stored = sum(attack[0] for attack in lighter_attack_list) if len(lighter_attack_list) > 0 else 0
             diag_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "diagonal"]
             horiz_attacks = [attack[0] for attack in lighter_attack_list if attack[1] == "horizontal"]
             if len(diag_attacks) == 0:

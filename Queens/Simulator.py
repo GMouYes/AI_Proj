@@ -70,8 +70,8 @@ def run_greedy_hill_climbing_simulation():
         # "confidence_thresh": range(10, 101, 10),
         # "max_sideways_moves": range(0, 101, 10),
         "initial_temp": range(10, 101, 10),
-        "cooling_schedule": ["geom"],
-        "cooling_param": np.arange(0.1, 1, 0.1)
+        "cooling_schedule": ["log"],
+        "cooling_param": np.arange(2, 11, 1)
     }
     return simulate_greedy_hill_climbing(sizes, h_type, param_dict)
 
