@@ -94,7 +94,7 @@ class MoveList(object):
         super(MoveList, self).__init__()
 
     def score(self):
-        return self.moves[-1]["score"] if len(self.moves) > 0 else 0
+        return self.moves[-1]["score"] if len(self.moves) > 0 else -np.inf
 
     def final_score_time(self):
         for move in self.moves:
@@ -189,7 +189,7 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
             choice["elapsed_time"] = elapsed_time
 
         # We stopped! Check if our solution is better than the current best.
-        if cur_solution.score() < best_solution.score():
+        if cur_solution.score() > best_solution.score():
             cur_solution.final_state = start_map.mapState
             best_solution = cur_solution
 
@@ -207,7 +207,8 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
         "score": best_solution.score(),
         "timeToBest": best_solution.final_score_time()
     }
-    for zone in best_solution.moves[-1]["zone_list"]:
-        start_map.mapState[zone.location[0], zone.location[1]] = zone.name
+    if len(best_solution.moves) > 0:
+        for zone in best_solution.moves[-1]["zone_list"]:
+            start_map.mapState[zone.location[0], zone.location[1]] = zone.name
     search_results["finalMap"] = start_map.mapState
     return search_results
