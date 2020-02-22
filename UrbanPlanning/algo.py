@@ -172,7 +172,7 @@ def greedyHillClimb(start_map: Map, mode="normal", deadline=10, confidence_thres
 
             if mode == "super_greedy":
                 # Get min-valued successors here
-                new_score = min(neighbor["score"] for neighbor in neighbors)
+                new_score = max(neighbor["score"] for neighbor in neighbors)
                 candidate_moves = [move for _, move in enumerate(neighbors) if move["score"] == new_score]
             else:
                 candidate_moves = neighbors
