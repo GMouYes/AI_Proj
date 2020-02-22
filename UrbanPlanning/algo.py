@@ -55,6 +55,7 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
     prev_best = float('-inf')
     population = []
     count = 0
+    times = {}
 
     start_time = time.time()
     # initialize population
@@ -79,15 +80,18 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
                 population.append((urbanmap.get_score(child1), child1))
             if ifValidZoneList(child2, urbanmap) and len(population) < k1:
                 population.append((urbanmap.get_score(child2), child2))
-        if max(population)[0] > prev_best:
+        cur_best = max(population)[0]
+        if cur_best > prev_best:
             count = 0
-        elif max(population)[0] <= prev_best:
+            if cur_best not in times:
+                times[cur_best] = time.time()-start_time
+        elif cur_best == prev_best:
             count += 1
-        prev_best = max(population)[0]
+        prev_best = cur_best
 
-    end_time = time.time()
+    time_elapsed = times[max(times.keys())]
 
-    return prev_best, max(population)[1], end_time-start_time
+    return prev_best, max(population)[1], time_elapsed
 
 
 class MoveList(object):
