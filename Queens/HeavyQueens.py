@@ -19,7 +19,7 @@ def search(initBoard, searchType, heuristicFunc):
     elif searchType == "1":
         return A_Star(initBoard,heuristicFunc)
     else:
-        return greedyHillClimb(initBoard, heuristicFunc, mode="super_greedy", initial_temp=30,
+        return greedyHillClimb(initBoard, heuristicFunc, mode="super_greedy", initial_temp=40,
                                cooling_schedule="log", cooling_param=math.e)
 
 

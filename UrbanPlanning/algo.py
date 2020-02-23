@@ -162,7 +162,7 @@ class Annealer(object):
 
 
 def greedyHillClimb(start_map: Map, mode="normal", deadline=10, confidence_thresh=40,
-                    max_sideways_moves=20, initial_temp=40, cooling_schedule="log", cooling_param=math.e):
+                    max_sideways_moves=20, initial_temp=20, cooling_schedule="geom", cooling_param=0.7):
     start_map_copy = copy.copy(start_map)
     # Do some initial setup here
     start_time = time.time()

@@ -32,7 +32,7 @@ def gen_random_board(size, skew=False):
     return new_board
 
 
-def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=10, replications=10):
+def simulate_search(sizes, h_type, alg, var_vals, print_every_n_steps=10, replications=10):
     """
 
     :param sizes:
@@ -45,7 +45,10 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=1
     """
     vars = var_vals.keys()
     vals = var_vals.values()
-    result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "solved"] + list(vars)))
+    if alg == "A_star":
+        result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "branchingFactor"]))
+    else:
+        result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "branchingFactor", "solved"] + list(vars)))
     iteration = 0
     sizes = sorted(sizes * replications)
     cur_size = sizes[0]
@@ -55,10 +58,15 @@ def simulate_greedy_hill_climbing(sizes, h_type, var_vals, print_every_n_steps=1
             board = gen_random_board(size, True)
         for val_combo in itertools.product(*vals):
             kw_dict = dict(zip(vars, val_combo))
-            result = searchAlgo.greedyHillClimb(copy.copy(board), h_type, **kw_dict)
-            result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "cost": result["cost"],
-                           "solved": result["solved"]}
-            result_dict.update(kw_dict)
+            if alg == "A_star":
+                result = searchAlgo.A_Star(copy.copy(board), h_type)
+                result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "cost": result["cost"],
+                               "branchingFactor": result["branchingFactor"]}
+            else:
+                result = searchAlgo.greedyHillClimb(copy.copy(board), h_type, **kw_dict)
+                result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "cost": result["cost"],
+                               "branchingFactor": result["branchingFactor"], "solved": result["solved"]}
+                result_dict.update(kw_dict)
 
             if iteration % print_every_n_steps == 0:
                 print(result_dict)
@@ -78,7 +86,20 @@ def run_greedy_hill_climbing_simulation():
         "cooling_schedule": ["geom"],
         "cooling_param": np.arange(0.1, 1.1, 0.1)
     }
-    return simulate_greedy_hill_climbing(sizes, h_type, param_dict)
+    return simulate_search(sizes, h_type, "hill_climbing", param_dict)
+
+
+def run_A_star_simulation():
+    sizes = [4]
+    h_type = "h1"
+    param_dict = {
+        # "confidence_thresh": range(10, 101, 10),
+        # "max_sideways_moves": range(0, 101, 10),
+        "initial_temp": range(10, 101, 10),
+        "cooling_schedule": ["geom"],
+        "cooling_param": np.arange(0.1, 1.1, 0.1)
+    }
+    return simulate_search(sizes, h_type, "hill_climbing", param_dict)
 
 
 def main():

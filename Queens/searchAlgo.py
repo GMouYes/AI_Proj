@@ -5,6 +5,7 @@ import numpy as np
 import copy
 import time
 import random
+from collections import defaultdict
 
 
 def tostring(state, m, n):
@@ -13,7 +14,7 @@ def tostring(state, m, n):
         for j in range(m):
             if state[j, i] != 0:
                 string += str(j)
-                if i < 4:
+                if i < m - 1:
                     string += ','
     return string
 
@@ -47,7 +48,7 @@ def A_Star(start: board, h_type: str):
     nodes_expanded = 0
     result = dict()
     result["initBoard"] = start
-    result["branchingFactor"] = 1
+    result["branchingFactor"] = 0
 
     start_time = time.time()
 
@@ -77,6 +78,25 @@ def A_Star(start: board, h_type: str):
                 next_state[0].priority = new_cost + next_state[0].heuristic(h_type)
                 frontier.put(next_state[0])
                 came_from[state_string] = tostring(cur_state.state, m, n)
+
+    # Get depth for each node
+    node_depths = {}
+    for node in came_from.keys():
+        depth = 0
+        cur = node
+        parent = came_from[cur]
+        while parent is not None:
+            cur = parent
+            parent = came_from[cur]
+            depth += 1
+        node_depths.update({node: depth})
+
+    depth_nodes = defaultdict(list)
+    {depth_nodes[depth].append(node) for node, depth in node_depths.items()}
+    expanded_per_depth = np.array([len(depth_nodes[depth]) for depth in depth_nodes])
+
+    if len(expanded_per_depth) > 0:
+        result["branchingFactor"] = np.mean(expanded_per_depth[1:]/expanded_per_depth[:-1])
 
     return result
 
@@ -125,7 +145,7 @@ class Annealer(object):
 
 
 def greedyHillClimb(start_board: board, h_type, mode="normal", deadline=10, confidence_thresh=100,
-                    max_sideways_moves=100, initial_temp=80, cooling_schedule="geom", cooling_param=0.4):
+                    max_sideways_moves=100, initial_temp=30, cooling_schedule="geom", cooling_param=0.3):
     start_board_copy = copy.copy(start_board)
     # Do some initial setup here
     start_time = time.time()
