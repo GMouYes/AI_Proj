@@ -105,7 +105,12 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
 
     score = prev_best
 
-    return score, time_elapsed, mapstate
+    search_results = {
+        "score": score,
+        "timeToBest": time_elapsed,
+        "finalMap": mapstate
+    }
+    return search_results
 
 
 class MoveList(object):
