@@ -23,11 +23,11 @@ collections
 ```
 ### Command line
 Open terminal and change directory to the Queens folder, then run the following command
-```python3
+```shell
 python3 UrbanPlanning.py [mapFileName] [GA|HC]
 ```
 For detailed explanation of each argv, you can simply run the following command:
-```python3
+```shell
 python3 UrbanPlanning.py
 ```
 ## Execution Results
