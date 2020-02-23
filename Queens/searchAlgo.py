@@ -13,7 +13,7 @@ def tostring(state, m, n):
         for j in range(m):
             if state[j, i] != 0:
                 string += str(j)
-                if i < 4:
+                if i < n-1:
                     string += ','
     return string
 
