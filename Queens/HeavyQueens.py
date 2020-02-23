@@ -1,8 +1,7 @@
 from HandleInput import *
 from HandleOutput import *
-from Board import *
 from searchAlgo import *
-import time
+import math
 
 
 def search(initBoard, searchType, heuristicFunc):
@@ -17,8 +16,11 @@ def search(initBoard, searchType, heuristicFunc):
 
     if searchType == "2":
         return greedyHillClimb(initBoard, heuristicFunc)
-    else:
+    elif searchType == "1":
         return A_Star(initBoard,heuristicFunc)
+    else:
+        return greedyHillClimb(initBoard, heuristicFunc, mode="super_greedy", initial_temp=30,
+                               cooling_schedule="log", cooling_param=math.e)
 
 
 def main():

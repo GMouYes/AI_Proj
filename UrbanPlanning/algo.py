@@ -156,7 +156,7 @@ class Annealer(object):
         return jump_prob
 
 
-def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
+def greedyHillClimb(start_map: Map, mode="normal", deadline=10, confidence_thresh=40,
                     max_sideways_moves=20, initial_temp=40, cooling_schedule="log", cooling_param=math.e):
     start_map_copy = copy.copy(start_map)
     # Do some initial setup here
@@ -184,12 +184,15 @@ def greedyHillClimb(start_map: Map, deadline=10, confidence_thresh=40,
             # Get available moves from the current state
             neighbors = Rules.get_neighbors(zone_list, start_map)
 
-            # Get min-valued successors here
-            # min_hval = min(neighbor["function_value"] for neighbor in neighbors)
-            # candidate_moves = [move for _, move in enumerate(neighbors) if move["function_value"] == min_hval]
+            if mode == "super_greedy":
+                # Get max-valued successors here
+                new_score = max(neighbor["score"] for neighbor in neighbors)
+                candidate_moves = [move for _, move in enumerate(neighbors) if move["score"] == new_score]
+            else:
+                candidate_moves = neighbors
 
             # Choose a candidate
-            choice = random.choice(neighbors)
+            choice = random.choice(candidate_moves)
 
             # Make a decision based on simulated annealing
             jump_prob = annealer.jump_probability(cur_score, choice["score"], cooling_func, num_iterations,

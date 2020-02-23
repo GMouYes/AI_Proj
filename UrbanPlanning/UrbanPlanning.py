@@ -7,8 +7,10 @@ from Rules import *
 def search(targetMap,searchType):
     if searchType == "ga":
         result = genetic(targetMap)
-    else:
+    elif searchType == "hc":
         result = greedyHillClimb(targetMap)
+    else:
+        result = greedyHillClimb(targetMap, mode="super_greedy")
     return result
 
 
