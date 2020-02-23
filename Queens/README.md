@@ -28,7 +28,7 @@ python3 HeavyQueens.py [boardFileName] [1|2] [h1|h2|h3]
 ```
 For detailed explanation of each argv, you can simply run the following command:
 ```python3
-python3 python3 HeavyQueens.py
+python3 HeavyQueens.py
 ```
 ## Execution Results
 Results will be printed out automatically. The following information will be shown:
