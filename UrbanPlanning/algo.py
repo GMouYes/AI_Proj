@@ -97,11 +97,11 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
         name = zone.name
         mapstate[location[0], location[1]] = name
 
-    m, n = np.shape(mapstate)
-    for i in range(m):
-        for j in range(n):
-            if mapstate[i, j] not in ['X', 'S', 'I', 'C', 'R']:
-                mapstate[i, j] = '0'
+    # m, n = np.shape(mapstate)
+    # for i in range(m):
+    #     for j in range(n):
+    #         if mapstate[i, j] not in ['X', 'S', 'I', 'C', 'R']:
+    #             mapstate[i, j] = '0'
 
     score = prev_best
 
