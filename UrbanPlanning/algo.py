@@ -8,6 +8,10 @@ import random
 import heapq
 
 
+def softmax(nums):
+    return [i for i in np.exp(nums)/sum(np.exp(nums))]
+
+
 def generateZones(m: int, n: int, maxi: int, maxc: int, maxr: int):
     num_of_i = np.random.randint(0, maxi + 1)
     num_of_c = np.random.randint(0, maxc + 1)
@@ -49,7 +53,7 @@ def mutation(zones: list, m: int, n: int, num_of_mutation: int):
     return zones
 
 
-def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutation=1):
+def genetic(urbanmap: Map, k1=250, k2=10, k3=10, max_iteration=100, num_of_mutation=1, time_limit=10):
     maxi, maxc, maxr = urbanmap.maxIndustrial, urbanmap.maxCommercial, urbanmap.maxResidential
     m, n = np.shape(urbanmap.mapState)
     prev_best = float('-inf')
@@ -65,14 +69,14 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
             population.append((urbanmap.get_score(zones), zones))
 
     # start genetic iteration
-    while count <= max_iteration:
+    while count <= max_iteration and time.time()-start_time < time_limit:
         parents = heapq.nlargest(k1 - k3, population)
         population = heapq.nlargest(k2, population)
         while len(population) < k1:
-            father = random.choices(population=parents, k=1)[0]
-            mother = random.choices(population=parents, k=1)[0]
+            father = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
+            mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
             while father[1] == mother[1]:
-                mother = random.choices(population=parents, k=1)[0]
+                mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
             child1, child2 = crossover(father[1], mother[1], n)
             child1 = mutation(child1, m, n, num_of_mutation)
             child2 = mutation(child2, m, n, num_of_mutation)
