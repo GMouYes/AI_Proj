@@ -22,6 +22,8 @@ def generateOutput(searchResults):
 
     print("#Nodes expanded:", searchResults["expandNodeCount"])
     print("Time elapsed:", handleTime(searchResults["elapsedTime"]))
+    if "bestSolutionTime" in searchResults:
+        print("Time to best solution:", handleTime(searchResults["bestSolutionTime"]))
     print("Effective branching factor:", searchResults["branchingFactor"])
     print("Cost of moves:", searchResults["cost"])
     print("-------------------------------------------")

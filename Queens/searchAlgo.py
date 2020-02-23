@@ -196,6 +196,7 @@ def greedyHillClimb(start_board: board, h_type, mode="normal", deadline=10, conf
         "initBoard": start_board_copy,
         "expandNodeCount": nodes_expanded_total,
         "elapsedTime": elapsed_time,
+        "bestSolutionTime": best_solution.moves[-1]["elapsed_time"] if len(best_solution.moves) > 0 else np.inf,
         "branchingFactor": np.mean(branching_factors),
         "cost": best_solution.cost(),
         "solved": len(best_solution.moves) > 0 and best_solution.moves[-1]["function_value"] == 0
