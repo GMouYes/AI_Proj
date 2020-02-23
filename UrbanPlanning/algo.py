@@ -91,7 +91,21 @@ def genetic(urbanmap: Map, k1=200, k2=10, k3=10, max_iteration=100, num_of_mutat
 
     time_elapsed = times[max(times.keys())]
 
-    return prev_best, max(population)[1], time_elapsed
+    mapstate = urbanmap.mapState
+    for zone in max(population)[1]:
+        location = zone.location
+        name = zone.name
+        mapstate[location[0], location[1]] = name
+
+    m, n = np.shape(mapstate)
+    for i in range(m):
+        for j in range(n):
+            if mapstate[i, j] not in ['X', 'S', 'I', 'C', 'R']:
+                mapstate[i, j] = '0'
+
+    score = prev_best
+
+    return score, time_elapsed, mapstate
 
 
 class MoveList(object):
