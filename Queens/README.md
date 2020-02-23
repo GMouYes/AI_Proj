@@ -2,9 +2,13 @@
 ## How to run the code
 ### Prerequisites
 #### Operating systems
-We tested on the most up to dated Windows 10, Mac OS and Linux Ubuntu 18.04. Users are safe to run our code on these platforms. For other platforms, generally speaking, it should also be fine but we cannot fully guarantee as no test was executed.
+We tested on the most up to dated
+* Windows 10
+* Mac OS
+* Linux Ubuntu 18.04
+Users are safe to run our code on these platforms. For other platforms, generally speaking, it should also be fine but we cannot fully guarantee as no test was executed.
 #### Language
-To run the code you will need to install `python3`. Any version no lower than V3.5 will be fine.
+To run the code you will need to install `python3`. Any version no earlier than `V3.5` will be fine.
 #### Dependency
 You would also need the following packages/libraries. Usually they are already automatically integrated together with python3. 
 ```
