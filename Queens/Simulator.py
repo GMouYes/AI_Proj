@@ -33,22 +33,13 @@ def gen_random_board(size, skew=False):
 
 
 def simulate_search(sizes, h_type, alg, var_vals, print_every_n_steps=10, replications=10):
-    """
-
-    :param sizes:
-    :param h_type:
-    :param var_vals:
-    :type sizes: list(int)
-    :type h_type: str
-    :type var_vals: dict
-    :return:
-    """
     vars = var_vals.keys()
     vals = var_vals.values()
     if alg == "A_star":
         result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "branchingFactor"]))
     else:
-        result_table = pd.DataFrame(columns=(["size", "elapsedTime", "cost", "branchingFactor", "solved"] + list(vars)))
+        result_table = pd.DataFrame(columns=(["size", "elapsedTime", "bestSolutionTime", "cost", "branchingFactor",
+                                              "solved"] + list(vars)))
     iteration = 0
     sizes = sorted(sizes * replications)
     cur_size = sizes[0]
@@ -64,8 +55,9 @@ def simulate_search(sizes, h_type, alg, var_vals, print_every_n_steps=10, replic
                                "branchingFactor": result["branchingFactor"]}
             else:
                 result = searchAlgo.greedyHillClimb(copy.copy(board), h_type, **kw_dict)
-                result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "cost": result["cost"],
-                               "branchingFactor": result["branchingFactor"], "solved": result["solved"]}
+                result_dict = {"size": size, "elapsedTime": result["elapsedTime"], "bestSolutionTime": result[
+                    "bestSolutionTime"], "cost": result["cost"], "branchingFactor": result["branchingFactor"],
+                    "solved": result["solved"]}
                 result_dict.update(kw_dict)
 
             if iteration % print_every_n_steps == 0:

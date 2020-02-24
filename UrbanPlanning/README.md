@@ -1,4 +1,4 @@
-# Queens
+# UrbanPlanning
 ## How to run the code
 ### Prerequisites
 #### Operating systems
@@ -24,18 +24,15 @@ collections
 ### Command line
 Open terminal and change directory to the Queens folder, then run the following command
 ```shell
-python3 HeavyQueens.py [boardFileName] [1|2] [h1|h2|h3]
+python3 UrbanPlanning.py [mapFileName] [GA|HC]
 ```
 For detailed explanation of each argv, you can simply run the following command:
 ```shell
-python3 HeavyQueens.py
+python3 UrbanPlanning.py
 ```
 ## Execution Results
-Results will be printed out automatically. The following information will be shown:
-* Your input choice
-* The start state
-* Time to solve the puzzle
-* The effective branching factor
-* The cost to solve the puzzle
-* The sequence of moves needed to solve the puzzle, if any
+Results will be generated to an outputfile automatically. The following information will be shown:
+* The score for this map
+* At what time that score was first achieved
+* The map, with the various industrial, commercial, and residential sites marked.
 
