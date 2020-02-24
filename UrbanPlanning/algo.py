@@ -75,6 +75,7 @@ def genetic(urbanmap: Map, k1=500, k2=20, k3=50, max_iteration=150, num_of_mutat
         while len(population) < k1:
             indeces = np.random.choice(range(len(parents)), size=2, replace=False,
                                        p=softmax([parent[0] for parent in parents]))
+            # without weight
             # indeces = np.random.choice(range(len(parents)), size=2, replace=False)
             father = parents[indeces[0]]
             mother = parents[indeces[1]]
