@@ -72,7 +72,7 @@ def genetic(urbanmap: Map, k1=500, k2=20, k3=50, max_iteration=150, num_of_mutat
     while count <= max_iteration and time.time()-start_time < time_limit:
         parents = heapq.nlargest(k1 - k3, population)
         population = heapq.nlargest(k2, population)
-        while len(population) < k1:
+        while len(population) < k1 and time.time()-start_time < time_limit:
             indeces = np.random.choice(range(len(parents)), size=2, replace=False,
                                        p=softmax([parent[0] for parent in parents]))
             # without weight
