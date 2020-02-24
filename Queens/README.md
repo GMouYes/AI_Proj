@@ -24,7 +24,7 @@ collections
 ### Command line
 Open terminal and change directory to the Queens folder, then run the following command
 ```shell
-python3 HeavyQueens.py [boardFileName] [1|2] [h1|h2|h3]
+python3 HeavyQueens.py [boardFileName] [1|2|3] [h1|h2|h3]
 ```
 For detailed explanation of each argv, you can simply run the following command:
 ```shell

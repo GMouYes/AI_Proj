@@ -4,6 +4,10 @@ try:
     from UrbanPlanning.HandleOutput import *
 except ImportError as ex:
     pass
+try:
+    from UrbanPlanning.HandleInput import *
+except ImportError as ex:
+    pass
 
 from algo import *
 from Rules import *

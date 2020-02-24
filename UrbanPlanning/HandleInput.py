@@ -19,7 +19,8 @@ def formatError():
     print("There's some problem with reading inputs, please check again:")
     print("You should have 2 explicit inputs.")
     print("1. Initial map state, indicated by the complete path of a file.")
-    print("2. Type of searching algo, \"HC\" for Hill Climbing, \"GA\" for Genetic Algorithm")
+    print("2. Type of searching algo, \"HC\" for Hill Climbing, \"GA\" for Genetic Algorithm, or \"SGHC\" for "
+          "Super-Greedy Hill Climbing")
     print("-----------------------------------------------------------------------------")
     return True
 
@@ -42,8 +43,10 @@ def repeatChoice(industrial, commercial, residential, siteMap, searchType):
     print("Searching Algo:", end=" ")
     if searchType == "hc":
         print("Hill Climbing")
-    else:
+    elif searchType == "ga":
         print("Genetic Algorithm")
+    else:
+        print("Super-Greedy Hill Climbing")
     # print("-------------------------------------------")
 
     print("Now searching, this may take some time ...")
@@ -67,7 +70,7 @@ def readInput():
         formatError()
         return False
 
-    if searchType not in ["hc", "ga", "hcsg"]:
+    if searchType not in ["hc", "ga", "sghc"]:
         formatError()
         return False
 
