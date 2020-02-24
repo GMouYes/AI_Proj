@@ -53,7 +53,7 @@ def mutation(zones: list, m: int, n: int, num_of_mutation: int):
     return zones
 
 
-def genetic(urbanmap: Map, k1=250, k2=10, k3=10, max_iteration=100, num_of_mutation=1, time_limit=10):
+def genetic(urbanmap: Map, k1=500, k2=20, k3=50, max_iteration=150, num_of_mutation=1, time_limit=10):
     maxi, maxc, maxr = urbanmap.maxIndustrial, urbanmap.maxCommercial, urbanmap.maxResidential
     m, n = np.shape(urbanmap.mapState)
     prev_best = float('-inf')
@@ -69,14 +69,16 @@ def genetic(urbanmap: Map, k1=250, k2=10, k3=10, max_iteration=100, num_of_mutat
             population.append((urbanmap.get_score(zones), zones))
 
     # start genetic iteration
-    while count <= max_iteration and time.time() - start_time < time_limit:
+    while count <= max_iteration and time.time()-start_time < time_limit:
         parents = heapq.nlargest(k1 - k3, population)
         population = heapq.nlargest(k2, population)
-        while len(population) < k1 and time.time() - start_time < time_limit:
-            father = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
-            mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
-            while father[1] == mother[1] and time.time() - start_time < time_limit:
-                mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
+        while len(population) < k1:
+            indeces = np.random.choice(range(len(parents)), size=2, replace=False,
+                                       p=softmax([parent[0] for parent in parents]))
+            # without weight
+            # indeces = np.random.choice(range(len(parents)), size=2, replace=False)
+            father = parents[indeces[0]]
+            mother = parents[indeces[1]]
             child1, child2 = crossover(father[1], mother[1], n)
             child1 = mutation(child1, m, n, num_of_mutation)
             child2 = mutation(child2, m, n, num_of_mutation)
