@@ -69,13 +69,13 @@ def genetic(urbanmap: Map, k1=250, k2=10, k3=10, max_iteration=100, num_of_mutat
             population.append((urbanmap.get_score(zones), zones))
 
     # start genetic iteration
-    while count <= max_iteration and time.time()-start_time < time_limit:
+    while count <= max_iteration and time.time() - start_time < time_limit:
         parents = heapq.nlargest(k1 - k3, population)
         population = heapq.nlargest(k2, population)
-        while len(population) < k1:
+        while len(population) < k1 and time.time() - start_time < time_limit:
             father = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
             mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
-            while father[1] == mother[1]:
+            while father[1] == mother[1] and time.time() - start_time < time_limit:
                 mother = random.choices(population=parents, weights=softmax([parent[0] for parent in parents]), k=1)[0]
             child1, child2 = crossover(father[1], mother[1], n)
             child1 = mutation(child1, m, n, num_of_mutation)
@@ -93,7 +93,7 @@ def genetic(urbanmap: Map, k1=250, k2=10, k3=10, max_iteration=100, num_of_mutat
             count += 1
         prev_best = cur_best
 
-    time_elapsed = times[max(times.keys())]
+    time_elapsed = times[max(times.keys())] if len(times) > 0 else time.time() - start_time
 
     mapstate = urbanmap.mapState
     for zone in max(population)[1]:
