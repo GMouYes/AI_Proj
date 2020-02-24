@@ -95,7 +95,7 @@ def genetic(urbanmap: Map, k1=500, k2=20, k3=50, max_iteration=150, num_of_mutat
             count += 1
         prev_best = cur_best
 
-    time_elapsed = times[max(times.keys())]
+    time_elapsed = times[max(times.keys())] if len(times) > 0 else time.time() - start_time
 
     mapstate = urbanmap.mapState
     for zone in max(population)[1]:
