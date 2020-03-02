@@ -6,7 +6,7 @@ Group 9: (Alphabetical Order in Last Name)
 * Chris Micek
 * Guanyi Mou
 * Bowen Tang
-* Hao Yin (Staring Proj 2)
+* Hao Yin (Starting Proj 2)
 
 *Thinking of adding weblinks in the future, not sure right now*
 
