@@ -7,7 +7,9 @@ Group 9: (Alphabetical Order in Last Name)
 * Guanyi Mou
 * Bowen Tang
 * Hao Yin (Staring Proj 2)
-<span style="color:blue">Thinking of adding weblinks in the future, not sure right now</span>
+
+*Thinking of adding weblinks in the future, not sure right now*
+
 ## Project Contents
 There will be mainly four folders, each containing one project. In total, there are 3 regular projects and 1 final project.
 * Proj1: Heavy Queens Problem and Urban Planning
