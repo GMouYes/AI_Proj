@@ -29,6 +29,11 @@ def main():
 
 
 if __name__ == '__main__':
+	# set up random seed
+	seed = 1
+	random.seed(seed)
+	np.random.seed(seed)
+
     main()
 
 # sample test cmd line: python3 EM.py sample_EM_data.csv 3
