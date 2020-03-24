@@ -33,11 +33,9 @@ def Maximization(responsibility, data):
 			norm_data = data[n,:] - new_mean[j,:]
 			new_cov[j] += norm_res[j][n] * norm_data.reshape(-1,1).dot(norm_data.reshape(1,-1))
 
+	new_weight = np.mean(responsibility, axis=1)
 
-
-    np.array([(data-row).dot((data-row).T) for row in new_mean])
-
-    new_cov = norm_res.dot()
+	return new_mean, new_cov, new_wweight
 
 def InitializeCluster(data, clusters, random_ratio):
 	# the way we initialize:
