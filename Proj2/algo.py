@@ -25,8 +25,8 @@ def Maximization(responsibility, data):
 
     # new_mean = np.zeros((num_cluster, dim_data))
     # for j in range(num_cluster):
-    #   for n in range(num_data):
-    #       new_mean[j] += norm_res[j][n] * data[n,:]
+    # 	for n in range(num_data):
+    # 		new_mean[j] += norm_res[j][n] * data[n,:]
 
 
     new_mean = norm_res.dot(data)  # clusters, dim_data
@@ -72,10 +72,6 @@ def Loglikelihood(data, mean, cov, weight):
 
     return log_sum
 
-def BIC():
-    return
-
-
 # placeholder function
 def EMClustering(data, clusters):
     num_data, dim_data = data.shape
@@ -113,6 +109,7 @@ def EMClustering(data, clusters):
     else:
         clusters = 1
         BIC = {}
+        final_result = {}
         while True and time.time() - start_time < 10:
             random_ratio =  .3
             temp = 10
@@ -135,9 +132,18 @@ def EMClustering(data, clusters):
                     BIC[clusters] = -2 * logLikelihood[-1] + np.log(len(data)) * clusters
 
                 logLikelihood.append(log_sum)
-
+            final_result[clusters] = result
             clusters += 1
         best_cluster = max(BIC, key=BIC.get)
-        return best_cluster,BIC[best_cluster]
+        return best_cluster,BIC[best_cluster],final_result[best_cluster]
 
-    
+            # flag = updateBestResult(mean,cov,log_sum)  # you define your own input/output
+
+
+
+      # you have to return the required dict
+if __name__ == '__main__':
+    data = pd.read_csv('sample EM data.csv',header=None).values
+    best_cluster, value,final = EMClustering(data, 0)
+    print(best_cluster, value,final)
+

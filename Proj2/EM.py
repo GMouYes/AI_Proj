@@ -1,7 +1,8 @@
 from HandleInput import *
 from HandleOutput import *
+from algo import *
 
-def search():
+def search(data, clusters):
     '''
     result = {
         'clusterCenters': [(0.12345,0.54321), (1.23456, 6.54321)], # expect a list of tuples of mean and var
@@ -10,10 +11,14 @@ def search():
     '''
 
     # you have to return the required dictionary
-    result = EMClustering(data, clusters)
+    if clusters > 0:
+        result = EMClustering(data, clusters)
 
-    # print(result)
-    return result
+        # print(result)
+        return result
+    else:
+        best_cluster, BIC, result = EMClustering(data, clusters)
+        return best_cluster, BIC, result
 
 
 def main():
@@ -22,18 +27,18 @@ def main():
     except Exception as e:
         return False
 
-    result = search(data, clusters)
+    if clusters > 0:
+        result = search(data, clusters)
 
-    writeFile(result)
-    return True
+        writeFile(result)
+        return True
+    else:
+        best_cluster, BIC, result = search(data, clusters)
+        writeFile_bic(best_cluster, BIC, result)
+        return True
 
 
 if __name__ == '__main__':
-	# set up random seed
-	seed = 1
-	random.seed(seed)
-	np.random.seed(seed)
-
     main()
 
 # sample test cmd line: python3 EM.py sample_EM_data.csv 3
