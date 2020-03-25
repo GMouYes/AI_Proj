@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import time
 import random
 import math
@@ -71,6 +72,9 @@ def Loglikelihood(data, mean, cov, weight):
 
     return log_sum
 
+def BIC():
+    return
+
 
 # placeholder function
 def EMClustering(data, clusters):
@@ -81,37 +85,59 @@ def EMClustering(data, clusters):
     random_ratio = .3
 
     diff = 0.001
+    # temp = 10
     logLikelihood = [1]
     result ={}
-
     start_time = time.time()
-    for _ in range(random_start_times):
-        mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
-        temp = 10
-        while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
-            temp = logLikelihood[-1]
-            # expectation
-            responsibility = Expectation(data, mean, cov, weight)
-            # maximization
-            mean, cov, weight = Maximization(responsibility, data)
-            # evaluation
-            log_sum = Loglikelihood(data, mean, cov, weight)
 
-            if log_sum > temp:
-                result['clusterCenters'] = [item for item in zip(mean,cov)]
-                result['logLikelihood'] = logLikelihood[-1]
+    if clusters > 0:
+        for _ in range(random_start_times):
+            mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
+            temp = 10
+            while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
+                temp = logLikelihood[-1]
+                # expectation
+                responsibility = Expectation(data, mean, cov, weight)
+                # maximization
+                mean, cov, weight = Maximization(responsibility, data)
+                # evaluation
+                log_sum = Loglikelihood(data, mean, cov, weight)
 
-            logLikelihood.append(log_sum)
+                if log_sum > temp:
+                    result['clusterCenters'] = [item for item in zip(mean,cov)]
+                    result['logLikelihood'] = logLikelihood[-1]
 
-            # flag = updateBestResult(mean,cov,log_sum)  # you define your own input/output
+                logLikelihood.append(log_sum)
+        return result
 
-    '''
-    result = {
-        'clusterCenters': (0,0), # expect a list of tuples of mean and var
-        'logLikelihood': -1., # expect a floating number
-    }
-    '''
+    else:
+        clusters = 1
+        BIC = {}
+        while True and time.time() - start_time < 10:
+            random_ratio =  .3
+            temp = 10
+            mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
+            result ={}
+            logLikelihood = [1]
 
-    return result  # you have to return the required dict
+            while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
+                temp = logLikelihood[-1]
+                # expectation
+                responsibility = Expectation(data, mean, cov, weight)
+                # maximization
+                mean, cov, weight = Maximization(responsibility, data)
+                # evaluation
+                log_sum = Loglikelihood(data, mean, cov, weight)
+
+                if log_sum > temp:
+                    result['clusterCenters'] = [item for item in zip(mean,cov)]
+                    result['logLikelihood'] = logLikelihood[-1]
+                    BIC[clusters] = -2 * logLikelihood[-1] + np.log(len(data)) * clusters
+
+                logLikelihood.append(log_sum)
+
+            clusters += 1
+        best_cluster = max(BIC, key=BIC.get)
+        return best_cluster,BIC[best_cluster]
 
     
