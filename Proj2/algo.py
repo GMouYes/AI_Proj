@@ -24,8 +24,8 @@ def Maximization(responsibility, data):
 
     # new_mean = np.zeros((num_cluster, dim_data))
     # for j in range(num_cluster):
-    # 	for n in range(num_data):
-    # 		new_mean[j] += norm_res[j][n] * data[n,:]
+    #   for n in range(num_data):
+    #       new_mean[j] += norm_res[j][n] * data[n,:]
 
 
     new_mean = norm_res.dot(data)  # clusters, dim_data
@@ -63,17 +63,13 @@ def InitializeCluster(data, clusters, random_ratio):
 
 def Loglikelihood(data, mean, cov, weight):
     # use sum of log-likelihood
-    likelihood = [multivariate_normal.logpdf(data, *item) for item in zip(mean, cov)]
+    # multivariate_normal.logpdf()
+    likelihood = [multivariate_normal.pdf(data, *item) for item in zip(mean, cov)]
     weighted_likelihood = np.array([w * ll for (w, ll) in zip(weight.T, likelihood)])
     responsibility = weighted_likelihood / np.sum(weighted_likelihood, axis=0)
-    log_sum = np.sum(weight * responsibility.T, axis=1)
-    return log_sum
+    log_sum = np.sum(np.log(np.sum(weight * responsibility.T, axis=1)))
 
-# def Converage():
-#     # use sum of log-likelihood
-#     # multivariate_normal.logpdf()
-#
-#     pass
+    return log_sum
 
 
 # placeholder function
@@ -85,15 +81,14 @@ def EMClustering(data, clusters):
     random_ratio = .3
 
     diff = 0.001
-    temp = 10
     logLikelihood = [1]
     result ={}
 
     start_time = time.time()
     for _ in range(random_start_times):
         mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
-
-        while abs(temp - logLikelihood[-1]) > diff:  # you define your own input/output
+        temp = 10
+        while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
             temp = logLikelihood[-1]
             # expectation
             responsibility = Expectation(data, mean, cov, weight)
@@ -101,9 +96,14 @@ def EMClustering(data, clusters):
             mean, cov, weight = Maximization(responsibility, data)
             # evaluation
             log_sum = Loglikelihood(data, mean, cov, weight)
+
+            if log_sum > temp:
+                result['clusterCenters'] = [item for item in zip(mean,cov)]
+                result['logLikelihood'] = logLikelihood[-1]
+
             logLikelihood.append(log_sum)
 
-            flag = updateBestResult(mean,cov,log_sum)  # you define your own input/output
+            # flag = updateBestResult(mean,cov,log_sum)  # you define your own input/output
 
     '''
     result = {
@@ -111,8 +111,7 @@ def EMClustering(data, clusters):
         'logLikelihood': -1., # expect a floating number
     }
     '''
-    result['clusterCenters'] = [item for item in zip(mean, cov)]
-    result['logLikelihood'] = logLikelihood[-1]
 
     return result  # you have to return the required dict
+
     

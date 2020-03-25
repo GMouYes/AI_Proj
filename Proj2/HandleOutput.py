@@ -20,7 +20,7 @@ def writeFile(result: dict):
 
     print("Best fitting cluster centers:")
     for pair in result["clusterCenters"]:
-        print("Mean: {:.4f}, Var: {:.4f}".format(pair[0], pair[1]))
+        print("Mean: {}, Var: {}".format(pair[0], pair[1]))
     print("-------------------------------------------")
     print("Log-likelihood: {:.4f}".format(result["logLikelihood"]))
 
