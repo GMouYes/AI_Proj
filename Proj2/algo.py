@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
 import time
-import random
-import math
 from scipy.stats import multivariate_normal
+import matplotlib.pyplot as plt
 
 
 def Expectation(data, mean, cov, weight):
@@ -25,8 +24,8 @@ def Maximization(responsibility, data):
 
     # new_mean = np.zeros((num_cluster, dim_data))
     # for j in range(num_cluster):
-    # 	for n in range(num_data):
-    # 		new_mean[j] += norm_res[j][n] * data[n,:]
+    #   for n in range(num_data):
+    #       new_mean[j] += norm_res[j][n] * data[n,:]
 
 
     new_mean = norm_res.dot(data)  # clusters, dim_data
@@ -77,19 +76,19 @@ def EMClustering(data, clusters):
     num_data, dim_data = data.shape
 
     # change these constants for more tests
-    random_start_times = 10
+    random_start_times = 0
+    random_start_max = 5
     random_ratio = .3
 
     diff = 0.001
-    # temp = 10
     logLikelihood = [1]
     result ={}
     start_time = time.time()
 
     if clusters > 0:
-        for _ in range(random_start_times):
+        while random_start_times <= random_start_max and time.time() - start_time < 10:
             mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
-            temp = 10
+            temp = 0
             while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
                 temp = logLikelihood[-1]
                 # expectation
@@ -104,15 +103,26 @@ def EMClustering(data, clusters):
                     result['logLikelihood'] = logLikelihood[-1]
 
                 logLikelihood.append(log_sum)
+
+            random_start_times += 1
+        # print(random_start_times)
+        # print(logLikelihood)
+        #
+        # plt.plot(logLikelihood[1:])
+        # plt.xlabel('number of iterations')
+        # plt.ylabel('Log-likelihood')
+        # plt.show()
+
         return result
 
     else:
         clusters = 1
+
         BIC = {}
         final_result = {}
         while True and time.time() - start_time < 10:
             random_ratio =  .3
-            temp = 10
+            temp = 0
             mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
             result ={}
             logLikelihood = [1]
@@ -129,17 +139,14 @@ def EMClustering(data, clusters):
                 if log_sum > temp:
                     result['clusterCenters'] = [item for item in zip(mean,cov)]
                     result['logLikelihood'] = logLikelihood[-1]
-                    BIC[clusters] = -2 * logLikelihood[-1] + np.log(len(data)) * clusters
+                    BIC[clusters] = -2 * logLikelihood[-1] + np.log(len(data)) * clusters * 2
 
                 logLikelihood.append(log_sum)
             final_result[clusters] = result
             clusters += 1
+
         best_cluster = max(BIC, key=BIC.get)
         return best_cluster,BIC[best_cluster],final_result[best_cluster]
-
-            # flag = updateBestResult(mean,cov,log_sum)  # you define your own input/output
-
-
 
       # you have to return the required dict
 if __name__ == '__main__':
@@ -147,3 +154,5 @@ if __name__ == '__main__':
     best_cluster, value,final = EMClustering(data, 0)
     print(best_cluster, value,final)
 
+#     result = EMClustering(data, 3)
+#     print(result)
