@@ -65,9 +65,7 @@ def Loglikelihood(data, mean, cov, weight):
     # use sum of log-likelihood
     # multivariate_normal.logpdf()
     likelihood = [multivariate_normal.pdf(data, *item) for item in zip(mean, cov)]
-    weighted_likelihood = np.array([w * ll for (w, ll) in zip(weight.T, likelihood)])
-    responsibility = weighted_likelihood / np.sum(weighted_likelihood, axis=0)
-    log_sum = np.sum(np.log(np.sum(weight * responsibility.T, axis=1)))
+    log_sum = np.sum(np.log(np.sum(weight * np.array(likelihood).T, axis=1)))
 
     return log_sum
 
@@ -77,16 +75,16 @@ def EMClustering(data, clusters):
 
     # change these constants for more tests
     random_start_times = 0
-    random_start_max = 5
+    random_start_max = 4
     random_ratio = .3
 
-    diff = 0.001
+    diff = 0.0001
     logLikelihood = [1]
     result ={}
     start_time = time.time()
 
     if clusters > 0:
-        while random_start_times <= random_start_max and time.time() - start_time < 10:
+        while random_start_times < random_start_max and time.time() - start_time < 10:
             mean, cov, weight = InitializeCluster(data, clusters, random_ratio)
             temp = 0
             while abs(logLikelihood[-1]- temp) > diff and time.time() - start_time < 10:  # you define your own input/output
@@ -105,7 +103,7 @@ def EMClustering(data, clusters):
                 logLikelihood.append(log_sum)
 
             random_start_times += 1
-        # print(random_start_times)
+        # print(random_start_times+1)
         # print(logLikelihood)
         #
         # plt.plot(logLikelihood[1:])
@@ -151,8 +149,8 @@ def EMClustering(data, clusters):
       # you have to return the required dict
 if __name__ == '__main__':
     data = pd.read_csv('sample EM data.csv',header=None).values
-    best_cluster, value,final = EMClustering(data, 0)
-    print(best_cluster, value,final)
+    # best_cluster, value,final = EMClustering(data, 0)
+    # print(best_cluster, value,final)
 
-#     result = EMClustering(data, 3)
-#     print(result)
+    result = EMClustering(data, 2)
+    print(result)
