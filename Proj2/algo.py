@@ -74,12 +74,11 @@ def updateResult(mean, cov, weight, log_sum, restart, start_time, clusters, num_
     # if you wish to include total time, please add another dict key
     # the same thing applies on entrance "restart"
     result = {
-        "clusterCenters": list(zip(mean,cov)),
+        "clusters": list(zip(mean,cov,weight)),
         "logLikelihood": log_sum,
-        "weight": weight,
         "restart": restart,
         "time": time.time() - start_time, 
-        "clusters": clusters,
+        "num_clusters": clusters,
         "BIC": -2 * log_sum + np.log(num_data) * clusters * 2,
     }
     return result
