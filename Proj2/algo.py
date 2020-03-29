@@ -67,7 +67,7 @@ def timeDiff(startTime, period):
     return (time.time() - startTime) < period
 
 def convergence(value1, value2, threshold):
-    return abs(value1 - value2) < diff
+    return abs(value1 - value2) < threshold
 
 def updateResult(mean, cov, weight, log_sum, restart, start_time, clusters, num_data):
     # notice: this is the "time" to find the best solution, not total time
@@ -136,7 +136,7 @@ def EMClustering(data, clusters):
         temp_best = float("inf")
         for candidate_cluster in range(1, data.shape[0]):
             temp_result = Clustering(data, candidate_cluster, period, random_start_times, random_ratio, start_time, diff)
-            period -= result["time"]
+            period -= temp_result["time"]
             # store better scores
             if temp_result["BIC"] < temp_best:
                 result = copy.deepcopy(temp_result)
