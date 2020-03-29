@@ -25,7 +25,7 @@ def writeFile(result: dict):
     print("-------------------------------------------")
 
     print("Simulation statistics:")
-    print("Time: {}".format(result["time"]))
+    print("Time: {}".format(handleTime(result["time"])))
     print("#Restarts: {}".format(result["restart"]))
 
     return True
