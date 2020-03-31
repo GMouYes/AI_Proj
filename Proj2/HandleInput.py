@@ -10,6 +10,7 @@ def readFile(fileName):
     return data
 
 def formatError():
+    ''' print out error and info to fix it '''
     print("-----------------------------------------------------------------------------")
     print("There's some problem with reading inputs, please check again:")
     print("You should have 2 explicit inputs.")
@@ -21,6 +22,7 @@ def formatError():
 
 
 def repeatChoice(fileName, data, clusters):
+    ''' interpret command and print it out '''
     print("-------------------------------------------")
     print("Input processing complete, you have chosen:")
     print("-------------------------------------------")
@@ -44,6 +46,7 @@ def repeatChoice(fileName, data, clusters):
 
 
 def readInput():
+    ''' consume input from command line and handle them '''
     # check passing in parameters
     if len(sys.argv) < 3:
         formatError()

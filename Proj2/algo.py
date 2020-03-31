@@ -1,12 +1,14 @@
 import numpy as np
-import pandas as pd
 import time
 from scipy.stats import multivariate_normal
 import copy
 import matplotlib.pyplot as plt
+import random
 
 
 def Expectation(data, mean, cov, weight):
+    ''' calculate the responsibility of each clusters to each data instance '''
+
     # likelihood for each cluster of all data instances
     likelihood = [multivariate_normal.pdf(data, *item) for item in zip(mean, cov)]  # (#clusters, #data)
     # multiply by their weights
@@ -18,6 +20,8 @@ def Expectation(data, mean, cov, weight):
 
 
 def Maximization(responsibility, data):
+    ''' calculate the new mean, covariance and weight of each cluster '''
+
     num_data, dim_data = data.shape
     num_cluster = responsibility.shape[0]
 
@@ -37,6 +41,8 @@ def Maximization(responsibility, data):
 
 
 def InitializeCluster(data, clusters, random_ratio):
+    ''' initialize the mean, covariance and weight of each cluster at the very beginning '''
+
     # the way we initialize:
     # pick instances randomly and calculate parameters
     # we could have run knn first but that takes time
@@ -58,6 +64,8 @@ def InitializeCluster(data, clusters, random_ratio):
 
 
 def Loglikelihood(data, mean, cov, weight):
+    ''' calculate the log-likelihood of given data and model '''
+
     likelihood = [multivariate_normal.pdf(data, *item) for item in zip(mean, cov)]
     log_sum = np.sum(np.log(np.sum(weight * np.array(likelihood).T, axis=1)))
 
@@ -67,12 +75,12 @@ def timeDiff(startTime, period):
     return (time.time() - startTime) < period
 
 def convergence(value1, value2, threshold):
+    ''' return if the given two timestamps are in the range of threshold '''
     return abs(value1 - value2) < threshold
 
 def updateResult(mean, cov, weight, log_sum, restart, start_time, clusters, num_data):
-    # notice: this is the "time" to find the best solution, not total time
-    # if you wish to include total time, please add another dict key
-    # the same thing applies on entrance "restart"
+    ''' given information, update the returning result in a dictionary '''
+
     result = {
         "clusters": list(zip(mean,cov,weight)),
         "logLikelihood": log_sum,
@@ -84,6 +92,8 @@ def updateResult(mean, cov, weight, log_sum, restart, start_time, clusters, num_
     return result
 
 def Clustering(data, clusters, maxTime, random_start_times, random_ratio, start_time, diff):
+    ''' actual clustering core code '''
+
     num_data, dim_data = data.shape
 
     for epoch in range(random_start_times):
@@ -118,12 +128,21 @@ def Clustering(data, clusters, maxTime, random_start_times, random_ratio, start_
 
 
 def EMClustering(data, clusters):
+    ''' where everything starts. Controlling hyper-parameters and handling multiple choices '''
 
-    # change these constants for more tests
+    # change the following lines for other random option
+    # these lines guarantee reproducibility
+    seed = 1
+    random.seed(seed)
+    np.random.seed(seed)
+
+    # change these constants for more test options
     random_start_times = 3
     random_ratio = .3
-    maxPeriod = 10 # algo should run no longer than 10 secs
     diff = 0.0001 # convergence threshold
+
+    # algo should run no longer than 10 secs, fixed
+    maxPeriod = 10 
 
     if clusters > 0:
         start_time = time.time()
