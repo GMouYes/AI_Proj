@@ -45,7 +45,7 @@ matplotlib
 ```
 
 ### Command line
-Open terminal and change directory to the Queens folder, then run the following command
+Open terminal and change directory to the ExpectationMaximization folder, then run the following command
 ```shell
 python3 EM.py [dataFileName] [#clusters]
 ```

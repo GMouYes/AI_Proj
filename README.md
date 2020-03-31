@@ -13,6 +13,6 @@ Group 9: (Alphabetical Order in Last Name)
 ## Project Contents
 There will be mainly four folders, each containing one project. In total, there are 3 regular projects and 1 final project.
 * Proj1: Heavy Queens Problem and Urban Planning
-* Proj2: IDK
+* Proj2: Kalman Filters and Expectation Maximization
 * Proj3: IDK
 * Final: We will see.
