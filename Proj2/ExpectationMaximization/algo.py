@@ -87,7 +87,7 @@ def updateResult(mean, cov, weight, log_sum, restart, start_time, clusters, num_
         "restart": restart,
         "time": time.time() - start_time, 
         "num_clusters": clusters,
-        "BIC": -2 * log_sum + np.log(num_data) * clusters * len(mean[0]),
+        "BIC": -2 * log_sum + np.log(num_data) * clusters * (len(mean) + len(cov)**2),
     }
     return result
 
