@@ -26,6 +26,7 @@ def formatError():
 
 
 def repeatChoice(industrial, commercial, residential, siteMap, searchType):
+    np.set_printoptions(threshold=np.inf, linewidth=np.inf)
     print("-------------------------------------------")
     print("Input processing complete, you have chosen:")
     print("-------------------------------------------")
