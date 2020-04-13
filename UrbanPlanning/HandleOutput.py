@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 
 def handleTime(elapsedTime):
@@ -21,6 +21,7 @@ def writeFile(result: dict):
     }
     '''
     outputPath = "Output.txt"
+    np.set_printoptions(threshold=np.inf,linewidth=np.inf)
     with open(outputPath, "w") as f:
         f.write("Final Score: " + str(result["score"]))
         f.write("\n")
