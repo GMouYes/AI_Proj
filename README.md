@@ -14,5 +14,5 @@ Group 9: (Alphabetical Order in Last Name)
 There will be mainly four folders, each containing one project. In total, there are 3 regular projects and 1 final project.
 * Proj1: Heavy Queens Problem and Urban Planning
 * Proj2: Kalman Filters and Expectation Maximization
-* Proj3: IDK
+* Proj3: Machine Learning and Q-Learning for grid world
 * Final: We will see.
