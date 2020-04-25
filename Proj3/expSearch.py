@@ -8,6 +8,7 @@ and executing experiments
 import time
 import numpy as np
 import sys
+import random
 
 # we wrote them
 from handleInput import *
@@ -54,6 +55,9 @@ def main():
 	
 	# make up hypers
 	hyperDict = hypers(data, moveCost, transitionProb)
+
+	# set random sequence
+	random.seed(hyperDict["randomSeed"])
 
 	# run the program
 	results = search(**hyperDict)
