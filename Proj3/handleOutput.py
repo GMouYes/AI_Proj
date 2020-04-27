@@ -9,23 +9,12 @@ def writeFile(result: dict):
     ''' write the output in a cleaner format '''
     print("OK everything is done now!")
     print("-------------------------------------------")
-    '''
-    print("Best fitting clusters:")
-    print("Number of clusters: {}".format(result["num_clusters"]))
 
-    for item in result["clusters"]:
-        print("Mean:\n{}".format(item[0]))
-        print("Cov:\n{}".format(item[1]))
-        print("Weight:\n{:.4f}".format(item[2]))
+    print("Training time:", result["time"])
+    print("Best Policy:")
+    print(result["policy"])
     print("-------------------------------------------")
-
-    print("Total Log-likelihood: {:.4f}".format(result["logLikelihood"]))
-    print("Model BIC: {:4f}".format(result["BIC"]))
-    print("-------------------------------------------")
-
-    print("Simulation statistics:")
-    print("Time: {}".format(handleTime(result["time"])))
-    print("#Restarts: {}".format(result["restart"]))
-    '''
+    print("Best Reward:")
+    print(result["reward"])
 
     return True

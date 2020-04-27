@@ -28,8 +28,8 @@ def hypers(data, moveCost, transitionProb):
 
 		# settings for grid search
 		"lambda":	0,
-		"maxEpoch":	20,
-		# ours:0, ramdon:1, epsilon-greedy:2
+		"maxTime":	20,
+		# ours:0, ramdom:1, epsilon-greedy:2
 		"algorithm": 0,
 		"epsilon": 0.1,
 
@@ -37,7 +37,7 @@ def hypers(data, moveCost, transitionProb):
 		"moveCost": moveCost,
 		"transitionProb": transitionProb,
 		"world": data,
-		"startPositon": (data.shape[0]-1, 0)
+		"startPosition": (data.shape[0]-1, 0)
 	}
 
 	if hyperDict["fixSeed"] != True:
