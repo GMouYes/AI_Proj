@@ -13,8 +13,6 @@ import random
 
 def search(**args):
     '''
-    placeholder function
-    # TODO: implement details
     '''
     world = args["world"]
     height, width = world.shape
@@ -95,9 +93,6 @@ def endState(position, world, reward):
 
 
 def update(Q, s, a, s_new, r, lr=0.1, gamma=0.95):
-    # index = convertPositiontoIndex(s, height, width)
-    # new_index = convertPositiontoIndex(s_new, height, width)
-    # Q[index, a] = Q[index, a] + lr * (r + gamma * np.max(Q[new_index]) - Q[index, a])
     Q[s][a] = Q[s][a] + lr * (r + gamma * np.max(Q[s_new]) - Q[s][a])
     return Q
 
@@ -106,8 +101,8 @@ def play(iteration, startPosition, Q, ratio, world, movecost, maxtime):
     height, width = np.shape(world)
     startTime = time.time()
     for _ in range(iteration):
-        if time.time()-startTime > maxtime:
-            t = time.time()-startTime
+        t = time.time()-startTime
+        if t > maxtime:
             break
         position = startPosition
         stepCounter = 0
@@ -124,8 +119,6 @@ def play(iteration, startPosition, Q, ratio, world, movecost, maxtime):
                 break
         reward = pathReward(world, position, stepCounter, movecost)
         endState(position, world, reward)
-
-    t = time.time()-startTime
 
     policy = np.zeros((height, width))
     for i in range(height):
@@ -154,15 +147,8 @@ def policyDirection(searchType, Q, position):
     if searchType == 0:
         return random.randint(0, 3)
     if searchType == 1:
-        # index = convertPositiontoIndex(position, height, width)
-        # return np.argmax(Q[index])
-        # return np.argmax(Q[position[0], position[1]])
         moves = Q[position]
         max_value = np.max(moves)
-        # choices = []
-        # for i in range(len(moves)):
-        #     if moves[i] == max_value:
-        #         choices.append(i)
         choices = [index for index,value in enumerate(moves) if value == max_value]
         return np.random.choice(choices, 1)[0]
     return 0
@@ -208,24 +194,24 @@ def actualPosition(world, position, direction):
         return (y, x - 1)
 
 
-def convertPositiontoIndex(position, height, width):
-    return position[0] * height + width
+# def convertPositiontoIndex(position, height, width):
+#     return position[0] * height + width
 
 
-def convertIndextoPosition(index, width):
-    return index // width, index % width
+# def convertIndextoPosition(index, width):
+#     return index // width, index % width
 
 
 def giveReward(position, world):
-    return world[position[0], position[1]]
+    return world[position]
 
-def main():
-    world = np.zeros((4, 6))
-    world[0, 0] = 1
-    world[1, 0] = -1
-    Q = np.zeros((4, 6, 4))
-    res = play(iteration=1000, startPosition=(2, 2), Q=Q, ratio=0.6, world=world, movecost=-0.04, maxtime=20)
-    print(res)
+# def main():
+#     world = np.zeros((4, 6))
+#     world[0, 0] = 1
+#     world[1, 0] = -1
+#     Q = np.zeros((4, 6, 4))
+#     res = play(iteration=1000, startPosition=(2, 2), Q=Q, ratio=0.6, world=world, movecost=-0.04, maxtime=20)
+#     print(res)
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
