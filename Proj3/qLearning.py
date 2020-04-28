@@ -105,6 +105,7 @@ def update(height, width, Q, s, a, s_new, r, lr=0.1, gamma=0.95):
     index = convertPositiontoIndex(s, height, width)
     new_index = convertPositiontoIndex(s_new, height, width)
     Q[index, a] = Q[index, a] + lr * (r + gamma * np.max(Q[new_index]) - Q[index, a])
+    return Q
 
 
 def play(iteration, startPosition, Q, ratio, world):
@@ -119,7 +120,7 @@ def play(iteration, startPosition, Q, ratio, world):
             newPosition = actualPosition(world, position, direction)
             reward = giveReward(newPosition, world)
             done = isEnd(world, newPosition)
-            update(height, width, Q, position, direction, newPosition, reward)
+            Q = update(height, width, Q, position, direction, newPosition, reward)
             position = newPosition
             # print(position)
             # print(Q)
