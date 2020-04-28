@@ -22,17 +22,18 @@ def search(**args):
     maxTime = args["maxTime"]
     transitionProb = args["transitionProb"]
 
-    # expected return: dict of following
     # policy = np.zeros((height, width))  # 0,1,2,3 indicating up, right, down, left
     # reward = np.zeros((height, width))  # real values
     Q = np.zeros((height, weight, 4))
-    Q, policy, time = play(iteration=500, startPosition=startPosition, Q=Q, ratio=0.8, world=world, movecost=moveCost,
+    Q, policy, time, epoch = play(startPosition=startPosition, Q=Q, ratio=transitionProb, world=world, movecost=moveCost,
                            maxtime=maxTime)
 
+    # expected return: dict of following
     result = {
         "policy": policy,
         "Q": Q,
         "time": time,
+        "epoch": epoch,
         # others to be determined
     }
 
@@ -40,6 +41,7 @@ def search(**args):
 
 
 def translateProcedure(stepCounter, position, chooseDirection, direction, newPosition):
+    # print for debugging at each iter
     directionDict = {
         0: "up",
         1: "right",
@@ -57,6 +59,7 @@ def translateProcedure(stepCounter, position, chooseDirection, direction, newPos
 
 
 def endState(position, world, reward):
+    # print for debugging at each epoch
     print("Reach end pos:", position)
     print("Final reward:", world[position])
     print("Overall reward:", reward)
@@ -97,35 +100,52 @@ def update(Q, s, a, s_new, r, lr=0.1, gamma=0.95):
     return Q
 
 
-def play(iteration, startPosition, Q, ratio, world, movecost, maxtime):
-    height, width = np.shape(world)
+def play(startPosition, Q, ratio, world, movecost, maxtime):
+    #height, width = np.shape(world)
     startTime = time.time()
-    for _ in range(iteration):
+    epoch = 0
+    
+    while True:
+        epoch += 1
+        # termination
         t = time.time()-startTime
         if t > maxtime:
             break
+
         position = startPosition
         stepCounter = 0
+
         while True:
             stepCounter += 1
+            # choose dir according to policy
             chooseDirection = policyDirection(1, Q, position)
+            # actual dir according to transition
             direction = actualDirection(chooseDirection, ratio)
+            # the expected landing position
             newPosition = actualPosition(world, position, direction)
+            # update reward and Q value
             reward = giveReward(newPosition, world) + movecost
             Q = update(Q, position, direction, newPosition, reward)
+            # debug print
             translateProcedure(stepCounter, position, chooseDirection, direction, newPosition)
+            # update new position
             position = newPosition
+            # ending criteria
             if isEnd(world, newPosition):
                 break
+        # final reward
         reward = pathReward(world, position, stepCounter, movecost)
+        # debug print
         endState(position, world, reward)
 
-    policy = np.zeros((height, width))
-    for i in range(height):
-        for j in range(width):
-            policy[i, j] = np.argmax(Q[i, j])
+    # policy = np.zeros((height, width))
+    # for i in range(height):
+    #     for j in range(width):
+    #         policy[i, j] = np.argmax(Q[i, j])
 
-    return Q, policy, t
+    policy = np.argmax(Q, axis=-1)
+
+    return Q, policy, t, epoch
 
 
 
@@ -136,14 +156,14 @@ def pathReward(world, position, stepCounter, moveCost):
 
 
 def isEnd(world, position: tuple):
-    if world[position] != 0.:
-        return True
-    return False
+    return True if world[position] != 0. else False
+    # if world[position] != 0.:
+    #     return True
+    # return False
 
 
 def policyDirection(searchType, Q, position):
     # return direction based on algorithm
-    # still placeholder
     if searchType == 0:
         return random.randint(0, 3)
     if searchType == 1:
