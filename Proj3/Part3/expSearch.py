@@ -9,13 +9,14 @@ import time
 import numpy as np
 import sys
 import random
+from pprint import pprint
 
 # we wrote them
 from handleInput import *
 from handleOutput import *
 from qLearning import *
 
-def hypers(data, moveCost, transitionProb):
+def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks):
 	'''
 	all hypers should be defined here
 	returning the dict of them
@@ -26,22 +27,35 @@ def hypers(data, moveCost, transitionProb):
 		"fixSeed": True, 
 		"randomSeed": 1,
 
-		# settings for grid search
-		"lambda":	0,
-		"maxTime":	20,
+		# settings for search
+		"initCreateProb": 0.13,
+		"increaseProb": 0.02,
+		"decreaseProb": -0.02,
+		"probUpperBound": 0.25,
+		"probLowerBound": 0.05,
+		"deliveryMultiplier": 30,
+		"defaultMaxTime": 1000,
+		
+		# not sure if we will use them
 		# ours:0, ramdom:1, epsilon-greedy:2
+		"lambda":	0,
 		"algorithm": 0,
 		"epsilon": 0.1,
 
-		# predefined
-		"moveCost": moveCost,
-		"transitionProb": transitionProb,
-		"world": data,
-		"startPosition": (data.shape[0]-1, 0)
+		# predefined by cmd line input
+		"truckCapacity": truckCapacity,
+		"startTruckPenalty": startingPenalty,
+		"lengthOfRoad": lengthOfRoad,
+		"maxTime":	maxClockTicks,
 	}
+
+	if hyperDict["maxTime"] == -1:
+		hyperDict["maxTime"] = hyperDict["defaultMaxTime"]
 
 	if hyperDict["fixSeed"] != True:
 		hyperDict["randomSeed"] = time.time()
+
+	pprint(hyperDict)
 
 	return hyperDict
 
@@ -49,16 +63,16 @@ def hypers(data, moveCost, transitionProb):
 def main():
 	# read inputs
 	try:
-		data, moveCost, transitionProb = readInput()
+		truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks = readInput()
 	except Exception as e:
 		return False
-	'''
+
 	# make up hypers
-	hyperDict = hypers(data, moveCost, transitionProb)
+	hyperDict = hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks)
 
 	# set random sequence
 	random.seed(hyperDict["randomSeed"])
-
+	'''
 	# run the program
 	results = search(**hyperDict)
 
@@ -75,4 +89,4 @@ if __name__ == '__main__':
 	# now ready to go
 	main()
 # sample cmd line to evoke:
-# python3 expSearch.py sample_grid.csv -0.04 0.6
+# python3 expSearch.py 20 10 -10 3

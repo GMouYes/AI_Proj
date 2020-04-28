@@ -12,32 +12,38 @@ def formatError():
     ''' print out error and info to fix it '''
     print("-----------------------------------------------------------------------------")
     print("There's some problem with reading inputs, please check again:")
-    print("You should have 3 explicit inputs.")
-    print("1. Initial data map/board, indicated by the complete path of a file.")
-    print("2. Movement cost for each step.")
-    print("3. Probability of same direction movement. Some value between 0 and 1.")
+    print("You should have 4 explicit inputs.")
+    print("1. Capacity of the truck, a positive integer.")
+    print("2. Length of the road, a positive integer.")
+    print("3. Penalty for starting the truck, natural number.")
+    print("4. Number of clock ticks, where:")
+    print("\t it is either a positive integer for the limitation;")
+    print("\t or -1 for \"forever\" (a large enough number)")
     print("-----------------------------------------------------------------------------")
     return True
 
 
-def repeatChoice(fileName, data, moveCost, transitionProb):
+def repeatChoice(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks):
     ''' interpret command and print it out '''
     print("-------------------------------------------")
     print("Input processing complete, you have chosen:")
     print("-------------------------------------------")
 
-    print("Target file to read:\t\t", fileName)
+    print("Truck capacity:\t\t", truckCapacity)
     # print("-------------------------------------------")
     
 
-    print("Movement cost for each step:\t", moveCost)
+    print("Length of the road:\t", lengthOfRoad)
     #print("-------------------------------------------")
 
-    print("Same direction probability:\t", transitionProb)
+    print("Truck start penalty:\t", startingPenalty)
     print("-------------------------------------------")
 
-    print("Grid world we got:")
-    print(data)
+    print("Number of clock ticks:\t", end=" ")
+    if maxClockTicks == -1:
+        print("up to us")
+    else:
+        print(maxClockTicks)
     print("-------------------------------------------")
 
     print("Now searching, this may take some time ...")
@@ -48,37 +54,52 @@ def repeatChoice(fileName, data, moveCost, transitionProb):
 def readInput():
     ''' consume input from command line and handle them '''
     # check passing in parameters
-    if len(sys.argv) < 4:
+    if len(sys.argv) < 5:
         formatError()
         return False
 
-    fileName = sys.argv[1]
-    moveCost = sys.argv[2]
-    transitionProb = sys.argv[3]
+    truckCapacity = sys.argv[1]
+    lengthOfRoad = sys.argv[2]
+    startingPenalty = sys.argv[3]
+    maxClockTicks = sys.argv[4]
 
     # check legal input strings
     try:
-        data = readFile(fileName)
+        truckCapacity = int(truckCapacity)
     except Exception as e:
-        print("Problem with reading the data points, please try again.")
+        formatError()
         return False
 
-    try:
-        moveCost = float(moveCost)
-    except Exception as e:
+    if truckCapacity <= 0:
         formatError()
         return False
 
     try:
-        transitionProb = float(transitionProb)
+        lengthOfRoad = int(lengthOfRoad)
     except Exception as e:
         formatError()
         return False
 
-    if transitionProb < 0 or transitionProb > 1:
+    if lengthOfRoad <= 0:
         formatError()
         return False
 
-    repeatChoice(fileName, data, moveCost, transitionProb)
+    try:
+        startingPenalty = float(startingPenalty)
+    except Exception as e:
+        formatError()
+        return False
 
-    return data, moveCost, transitionProb
+    try:
+        maxClockTicks = int(maxClockTicks)
+    except Exception as e:
+        formatError()
+        return False
+
+    if maxClockTicks <= 0 and maxClockTicks != -1:
+        formatError()
+        return False
+
+    repeatChoice(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks)
+
+    return truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks

@@ -39,7 +39,6 @@ def search(**args):
 
     return result
 
-
 def translateProcedure(stepCounter, position, chooseDirection, direction, newPosition):
     # print for debugging at each iter
     directionDict = {
@@ -57,42 +56,12 @@ def translateProcedure(stepCounter, position, chooseDirection, direction, newPos
     print("")
     return
 
-
 def endState(position, world, reward):
     # print for debugging at each epoch
     print("Reach end pos:", position)
     print("Final reward:", world[position])
     print("Overall reward:", reward)
     print("")
-
-
-# def lookForPath(startPosition, world, moveCost, maxTime, searchType, ratio):
-#     stepCounter = 0
-#     position = startPosition
-#     startTime = time.time()
-#     while True:
-#         if isEnd(world, position):
-#             reward = pathReward(world, position, stepCounter, moveCost)
-#
-#             endState(position, world, reward)
-#
-#             break
-#
-#         if time.time() - startTime > maxTime:
-#             print("Max time reached, ending at step", stepCounter)
-#             break
-#
-#         stepCounter += 1
-#         chooseDirection = policyDirection(searchType)
-#         direction = actualDirection(chooseDirection, ratio)
-#         newPosition = actualPosition(world, position, direction)
-#
-#         translateProcedure(stepCounter, position, chooseDirection, direction, newPosition)
-#
-#         position = newPosition
-#
-#     return
-
 
 
 def update(Q, s, a, s_new, r, lr=0.1, gamma=0.95):
@@ -137,11 +106,6 @@ def play(startPosition, Q, ratio, world, movecost, maxtime):
         reward = pathReward(world, position, stepCounter, movecost)
         # debug print
         endState(position, world, reward)
-
-    # policy = np.zeros((height, width))
-    # for i in range(height):
-    #     for j in range(width):
-    #         policy[i, j] = np.argmax(Q[i, j])
 
     policy = np.argmax(Q, axis=-1)
 
@@ -214,24 +178,5 @@ def actualPosition(world, position, direction):
         return (y, x - 1)
 
 
-# def convertPositiontoIndex(position, height, width):
-#     return position[0] * height + width
-
-
-# def convertIndextoPosition(index, width):
-#     return index // width, index % width
-
-
 def giveReward(position, world):
     return world[position]
-
-# def main():
-#     world = np.zeros((4, 6))
-#     world[0, 0] = 1
-#     world[1, 0] = -1
-#     Q = np.zeros((4, 6, 4))
-#     res = play(iteration=1000, startPosition=(2, 2), Q=Q, ratio=0.6, world=world, movecost=-0.04, maxtime=20)
-#     print(res)
-
-# if __name__ == '__main__':
-#     main()
