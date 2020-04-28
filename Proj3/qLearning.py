@@ -105,7 +105,7 @@ def update(height, width, Q, s, a, s_new, r, lr=0.1, gamma=0.95):
     # index = convertPositiontoIndex(s, height, width)
     # new_index = convertPositiontoIndex(s_new, height, width)
     # Q[index, a] = Q[index, a] + lr * (r + gamma * np.max(Q[new_index]) - Q[index, a])
-    Q[s[0], s[1], a] = Q[s[0], s[1], a] + lr * (r + gamma * np.max(Q[s_new[0], s_new[1]]) - Q[s[0], s[1], a])
+    Q[s][a] = Q[s][a] + lr * (r + gamma * np.max(Q[s_new]) - Q[s][a])
     return Q
 
 
@@ -116,16 +116,15 @@ def play(iteration, startPosition, Q, ratio, world, movecost):
         position = startPosition
         stepCounter = 0
         while True:
+            stepCounter += 1
             chooseDirection = policyDirection(1, Q, position)
             direction = actualDirection(chooseDirection, ratio)
             newPosition = actualPosition(world, position, direction)
-            reward = giveReward(newPosition, world)+movecost
-            done = isEnd(world, newPosition)
+            reward = giveReward(newPosition, world) + movecost
             Q = update(height, width, Q, position, direction, newPosition, reward)
-            stepCounter += 1
             translateProcedure(stepCounter, position, chooseDirection, direction, newPosition)
             position = newPosition
-            if done:
+            if isEnd(world, newPosition):
                 break
         reward = pathReward(world, position, stepCounter, movecost)
         endState(position, world, reward)
@@ -155,12 +154,13 @@ def policyDirection(searchType, Q, position):
         # index = convertPositiontoIndex(position, height, width)
         # return np.argmax(Q[index])
         # return np.argmax(Q[position[0], position[1]])
-        moves = Q[position[0], position[1]]
+        moves = Q[position]
         max_value = np.max(moves)
-        choices = []
-        for i in range(len(moves)):
-            if moves[i] == max_value:
-                choices.append(i)
+        # choices = []
+        # for i in range(len(moves)):
+        #     if moves[i] == max_value:
+        #         choices.append(i)
+        choices = [index for index,value in enumerate(moves) if value == max_value]
         return np.random.choice(choices, 1)[0]
     return 0
 
@@ -221,7 +221,7 @@ def main():
     world[0, 0] = 1
     world[1, 0] = -1
     Q = np.zeros((4, 6, 4))
-    res = play(iteration=100, startPosition=(3, 5), Q=Q, ratio=0.8, world=world, movecost=-0.1)
+    res = play(iteration=1, startPosition=(3, 0), Q=Q, ratio=0.6, world=world, movecost=-0.04)
     print(res)
 
 if __name__ == '__main__':
