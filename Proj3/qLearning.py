@@ -221,7 +221,7 @@ def main():
     world[0, 0] = 1
     world[1, 0] = -1
     Q = np.zeros((4, 6, 4))
-    res = play(iteration=100, startPosition=(3, 5), Q=Q, ratio=0.8, world=world, movecost=-0.1)
+    res = play(iteration=1000, startPosition=(3, 0), Q=Q, ratio=0.8, world=world, movecost=-0.1)
     print(res)
 
 if __name__ == '__main__':
