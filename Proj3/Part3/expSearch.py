@@ -50,9 +50,6 @@ def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, seed):
 	if hyperDict["maxTime"] == -1:
 		hyperDict["maxTime"] = hyperDict["defaultMaxTime"]
 
-	if hyperDict["fixSeed"] != True:
-		hyperDict["randomSeed"] = time.time()
-
 	# pprint(hyperDict)
 
 	return hyperDict
@@ -75,7 +72,7 @@ def main(seed=1):
 	results = search(**hyperDict)
 
 	# generate output
-	status = writeFile(results)
+	# status = writeFile(results)
 	
 
 	return True

@@ -12,15 +12,15 @@ import random
 
 class truck(object):
     """docstring for truck"""
-    def __init__(self, capacity, multiplier):
+    def __init__(self, capacity, multiplier, startPenalty):
         super(truck, self).__init__()
         self.capacity = capacity
-        self.emptySpace = capacity
         self.multiplier = multiplier
         self.currentPos = 0
         self.longestDestination = 0
         self.packageList = []
         self.reward = 0
+        self.startPenalty = startPenalty
 
         # 0: stay; 1: move forward; -1: move backward
         self.nextStep = 0
@@ -28,20 +28,34 @@ class truck(object):
     def loadPackage(self, packageList):
         # upload the packages to truck until capacity
         # return the remaining packages
-        self.packageList += packageList[:self.emptySpace]
-        packageList = packageList[self.emptySpace:]
-        self.emptySpace = self.capacity - len(self.packageList)
+        # FIFO
+        emptySpace = self.capacity - len(self.packageList)
+        self.packageList += packageList[:emptySpace]
+        packageList = packageList[emptySpace:]
         return packageList
 
-    def decideAction(self, **args):
+    def decideAction(self, strategy):
         # whether to wait:False or start:True
         # TODO: implement
-        flag = True
+        if strategy == 0:
+            # dummy strategy 0: always start so long as its not empty
+            # this is for debugging
+            # comment out for real case
+            flag = True if len(self.packageList) > 0 else False
+
+        if strategy == 1:
+            # dummy strategy 1: only start when it is full
+            # this is for debugging
+            # comment out for real case
+            flag = True if len(self.packageList) == self.capacity else False
+
+        # you design other strategies
+
         return flag
 
-    def startDeliver(self, penalty):
+    def startDeliver(self):
         self.nextStep = 1
-        self.reward +=  penalty
+        self.reward +=  self.startPenalty
         return True
 
     def deliver(self, lengthOfRoad):
@@ -61,7 +75,7 @@ class truck(object):
     def wait(self):
         # next step still same place
         self.nextStep = 0
-        return true
+        return True
 
     def updatePos(self):
         self.currentPos += self.nextStep
@@ -93,7 +107,7 @@ class warehouse(object):
     def _updateStatus(self, status):
         self.prevStatus = status
 
-    def _getStatus(self):
+    def _getStatus(self, prob):
         # tell whether it should create new package
         state = random.random()
         if state < prob:
@@ -131,26 +145,40 @@ class environment(object):
     """docstring for environment"""
     def __init__(self, **args):
         super(environment, self).__init__()
+
+        warehouseDict = {
+            "initProb": args["initCreateProb"],
+            "probUpperBound": args["probUpperBound"],
+            "probLowerBound": args["probLowerBound"],
+            "increaseProb": args["increaseProb"],
+            "decreaseProb": args["decreaseProb"],
+        }
         
-        self.warehouse = warehouse(initProb, probUpperBound, probLowerBound, increaseProb, decreaseProb)
-        self.truck = truck(capacity, multiplier)
+        truckDict = {
+            "capacity": args["truckCapacity"],
+            "multiplier": args["deliveryMultiplier"],
+            "startPenalty": args["startTruckPenalty"]
+        }
+
+        self.warehouse = warehouse(**warehouseDict)
+        self.truck = truck(**truckDict)
 
         self.reward = 0
         self.clock = 0
-        self.lengthOfRoad = lengthOfRoad
-        self.maxTime = maxTime
+        self.lengthOfRoad = args["lengthOfRoad"]
+        self.maxTime = args["maxTime"]
 
         self.packageNotOnTruck =  []
 
-    def iteration(self):
+    def _iteration(self, strategy):
         # first check ending standard
-        if self.clock >= maxTime:
+        if self.clock >= self.maxTime:
             return False
         self.clock += 1
 
         # then update warehouse and truck
-        result1 = self.warehouse.updateWarehouse()
-        result2 = self.truck.updatePos()
+        result = self.warehouse.updateWarehouse(self.clock, self.lengthOfRoad)
+        _ = self.truck.updatePos()
 
         # load into lists
         if result is not None:
@@ -161,14 +189,14 @@ class environment(object):
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
-            flag = self.truck.decideAction() # you decide the inputs
+            flag = self.truck.decideAction(strategy=strategy) # you decide the inputs
             if flag:
                 self.truck.startDeliver() # calculate reward, leaving warehouse
             else:
                 self.truck.wait() # stay for the next clock tick
         # on its way, deliver things
         else:
-            self.truck.deliver()
+            self.truck.deliver(self.lengthOfRoad)
             
         # for every package not yet delivered, calculate penalty
         if len(self.packageNotOnTruck) > 0:
@@ -185,15 +213,43 @@ class environment(object):
         return True
 
     def simulation(self):
-        while self.iteration():
-            True # do nothing
+        # 1. test: strategy 0: pass!
+        # 2. test: strategy 1: pass!
+        strategy = 1
+        while self._iteration(strategy):
+            # do anything
+
+            # prints for debug, comment out in real case 
+            self._stepCheck()
+
+            # 3. test: only do one step, uncomment next line
+            # break
+
         return # up to you about what to return
+
+    def _stepCheck(self):
+        print("Clock time:\t", self.clock)
+        print("-------------------------------------------")
+        print("Warehouse Check:")
+        print("Prev Status Create Package:\t", self.warehouse.prevStatus)
+        print("Prev Prob Create Package:\t", self.warehouse.prevProb)
+        print("#Packages left in house:\t", len(self.packageNotOnTruck))
+        print("Destinations:\t\t\t", [item.deliverHouse for item in self.packageNotOnTruck])
+        print("-------------------------------------------")
+        print("Truck Check:")
+        print("Truck Position:\t\t\t", self.truck.currentPos)
+        print("#Packages left on truck:\t", len(self.truck.packageList))
+        print("Destinations:\t\t\t", [item.deliverHouse for item in self.truck.packageList])
+        print("Current Truck Reward:\t\t", self.truck.reward)
+        print("")
+        return True
 
 
 def search(**args):
     '''
     placeholder func
     '''
-    game = environment()
+    game = environment(**args)
+    game.simulation()
 
-    return result
+    return {} # up to designers
