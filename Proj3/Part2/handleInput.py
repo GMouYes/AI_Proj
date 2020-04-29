@@ -1,6 +1,4 @@
-from handleOutput import *
 from expSearch import *
-import numpy as np
 
 def readFile(fileName):
     data = np.genfromtxt(fileName, delimiter=',')

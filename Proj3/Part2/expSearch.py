@@ -15,20 +15,19 @@ from handleInput import *
 from handleOutput import *
 from qLearning import *
 
-def hypers(data, moveCost, transitionProb):
+def hypers(data, moveCost, transitionProb, seed):
 	'''
 	all hypers should be defined here
 	returning the dict of them
 	'''
 
 	hyperDict = {
-		# if you need to change seed everytime, set it to False
-		"fixSeed": True, 
-		"randomSeed": 1,
+		"randomSeed": seed,
 
 		# settings for grid search
 		"lambda":	0,
 		"maxTime":	20,
+		"tol":		5e-4,
 		# ours:0, ramdom:1, epsilon-greedy:2
 		"algorithm": 0,
 		"epsilon": 0.1,
@@ -40,13 +39,10 @@ def hypers(data, moveCost, transitionProb):
 		"startPosition": (data.shape[0]-1, 0)
 	}
 
-	if hyperDict["fixSeed"] != True:
-		hyperDict["randomSeed"] = time.time()
-
 	return hyperDict
 
 
-def main():
+def main(seed=1):
 	# read inputs
 	try:
 		data, moveCost, transitionProb = readInput()
@@ -54,10 +50,7 @@ def main():
 		return False
 	
 	# make up hypers
-	hyperDict = hypers(data, moveCost, transitionProb)
-
-	# set random sequence
-	random.seed(hyperDict["randomSeed"])
+	hyperDict = hypers(data, moveCost, transitionProb, seed)
 
 	# run the program
 	results = search(**hyperDict)
@@ -71,7 +64,14 @@ def main():
 if __name__ == '__main__':
 	# set up default display mode
 	np.set_printoptions(threshold=sys.maxsize)
+	# set random sequence
+	seed = 1
+	# seed = time.time()
+	random.seed(seed)
+	np.random.seed(seed)
+
 	# now ready to go
-	main()
+	main(seed=seed)
+
 # sample cmd line to evoke:
 # python3 expSearch.py sample_grid.csv -0.04 0.6
