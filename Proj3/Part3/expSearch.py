@@ -16,16 +16,14 @@ from handleInput import *
 from handleOutput import *
 from qLearning import *
 
-def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks):
+def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, seed):
 	'''
 	all hypers should be defined here
 	returning the dict of them
 	'''
 
 	hyperDict = {
-		# if you need to change seed everytime, set it to False
-		"fixSeed": True, 
-		"randomSeed": 1,
+		"randomSeed": seed,
 
 		# settings for search
 		"initCreateProb": 0.13,
@@ -60,7 +58,7 @@ def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks):
 	return hyperDict
 
 
-def main():
+def main(seed=1):
 	# read inputs
 	try:
 		truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks = readInput()
@@ -68,7 +66,7 @@ def main():
 		return False
 
 	# make up hypers
-	hyperDict = hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks)
+	hyperDict = hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, seed)
 
 	# set random sequence
 	random.seed(hyperDict["randomSeed"])
@@ -86,7 +84,12 @@ def main():
 if __name__ == '__main__':
 	# set up default display mode
 	np.set_printoptions(threshold=sys.maxsize)
+	# set random sequence
+	seed = 1
+	# seed = time.time()
+	random.seed(seed)
+	np.random.seed(seed)
 	# now ready to go
-	main()
+	main(seed=seed)
 # sample cmd line to evoke:
 # python3 expSearch.py 20 10 -10 3
