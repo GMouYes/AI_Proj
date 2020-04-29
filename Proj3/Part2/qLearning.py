@@ -92,7 +92,7 @@ def play(startPosition, Q, ratio, world, movecost, maxtime, threshold):
             newPosition = actualPosition(world, position, direction)
             # update reward and Q value
             reward = giveReward(newPosition, world) + movecost
-            Q = update(Q, position, direction, newPosition, reward)
+            Q = update(Q, position, chooseDirection, newPosition, reward)
             # debug print
             # translateProcedure(stepCounter, position, chooseDirection, direction, newPosition)
             # update new position
