@@ -9,9 +9,12 @@ from expSearch import *
 import time
 import numpy as np
 import random
+import itertools
+
 
 class truck(object):
     """docstring for truck"""
+
     def __init__(self, capacity, multiplier, startPenalty):
         super(truck, self).__init__()
         self.capacity = capacity
@@ -43,19 +46,21 @@ class truck(object):
             # comment out for real case
             flag = True if len(self.packageList) > 0 else False
 
-        if strategy == 1:
+        elif strategy == 1:
             # dummy strategy 1: only start when it is full
             # this is for debugging
             # comment out for real case
             flag = True if len(self.packageList) == self.capacity else False
 
         # you design other strategies
+        else:
+            flag = True
 
         return flag
 
     def startDeliver(self):
         self.nextStep = 1
-        self.reward +=  self.startPenalty
+        self.reward += self.startPenalty
         return True
 
     def deliver(self, lengthOfRoad):
@@ -79,10 +84,11 @@ class truck(object):
 
     def updatePos(self):
         self.currentPos += self.nextStep
-        return True
+
 
 class warehouse(object):
     """docstring for warehouse"""
+
     def __init__(self, initProb, probUpperBound, probLowerBound, increaseProb, decreaseProb):
         super(warehouse, self).__init__()
         self.prevProb = initProb
@@ -115,7 +121,7 @@ class warehouse(object):
         else:
             status = False
         return status
-        
+
     def _createPackage(self, timestamp, lengthOfRoad):
         deliverHouse = random.randint(1, lengthOfRoad)
         newPackage = package(timestamp, deliverHouse)
@@ -133,31 +139,34 @@ class warehouse(object):
             return self._createPackage(timestamp, lengthOfRoad)
         return None
 
-        
+
 class package(object):
     """docstring for package"""
+
     def __init__(self, createTime, deliverHouse):
         super(package, self).__init__()
         self.createTime = createTime
         self.deliverHouse = deliverHouse
 
+
 class environment(object):
     """docstring for environment"""
-    def __init__(self, **args):
+
+    def __init__(self, **kwargs):
         super(environment, self).__init__()
 
         warehouseDict = {
-            "initProb": args["initCreateProb"],
-            "probUpperBound": args["probUpperBound"],
-            "probLowerBound": args["probLowerBound"],
-            "increaseProb": args["increaseProb"],
-            "decreaseProb": args["decreaseProb"],
+            "initProb": kwargs["initCreateProb"],
+            "probUpperBound": kwargs["probUpperBound"],
+            "probLowerBound": kwargs["probLowerBound"],
+            "increaseProb": kwargs["increaseProb"],
+            "decreaseProb": kwargs["decreaseProb"],
         }
-        
+
         truckDict = {
-            "capacity": args["truckCapacity"],
-            "multiplier": args["deliveryMultiplier"],
-            "startPenalty": args["startTruckPenalty"]
+            "capacity": kwargs["truckCapacity"],
+            "multiplier": kwargs["deliveryMultiplier"],
+            "startPenalty": kwargs["startTruckPenalty"]
         }
 
         self.warehouse = warehouse(**warehouseDict)
@@ -165,12 +174,12 @@ class environment(object):
 
         self.reward = 0
         self.clock = 0
-        self.lengthOfRoad = args["lengthOfRoad"]
-        self.maxTime = args["maxTime"]
+        self.lengthOfRoad = kwargs["lengthOfRoad"]
+        self.maxTime = kwargs["maxTime"]
 
-        self.packageNotOnTruck =  []
+        self.packageNotOnTruck = []
 
-    def _iteration(self, strategy):
+    def _iteration(self, strategy, **kwargs):
         # first check ending standard
         if self.clock >= self.maxTime:
             return False
@@ -178,7 +187,7 @@ class environment(object):
 
         # then update warehouse and truck
         result = self.warehouse.updateWarehouse(self.clock, self.lengthOfRoad)
-        _ = self.truck.updatePos()
+        self.truck.updatePos()
 
         # load into lists
         if result is not None:
@@ -189,15 +198,15 @@ class environment(object):
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
-            flag = self.truck.decideAction(strategy=strategy) # you decide the inputs
+            flag = self.truck.decideAction(strategy=strategy)  # you decide the inputs
             if flag:
-                self.truck.startDeliver() # calculate reward, leaving warehouse
+                self.truck.startDeliver()  # calculate reward, leaving warehouse
             else:
-                self.truck.wait() # stay for the next clock tick
+                self.truck.wait()  # stay for the next clock tick
         # on its way, deliver things
         else:
             self.truck.deliver(self.lengthOfRoad)
-            
+
         # for every package not yet delivered, calculate penalty
         if len(self.packageNotOnTruck) > 0:
             timeDiff1 = sum([self.clock - package.createTime for package in self.packageNotOnTruck])
@@ -212,11 +221,12 @@ class environment(object):
         self.truck.reward -= (timeDiff1 + timeDiff2)
         return True
 
-    def simulation(self):
+    def simulation(self, **kwargs):
         # 1. test: strategy 0: pass!
         # 2. test: strategy 1: pass!
-        strategy = 1
-        while self._iteration(strategy):
+        strategy = kwargs["algorithm"]
+
+        while self._iteration(strategy, **kwargs):
             # do anything
 
             # prints for debug, comment out in real case 
@@ -225,7 +235,7 @@ class environment(object):
             # 3. test: only do one step, uncomment next line
             # break
 
-        return # up to you about what to return
+        return  # up to you about what to return
 
     def _stepCheck(self):
         print("Clock time:\t", self.clock)
@@ -245,11 +255,34 @@ class environment(object):
         return True
 
 
-def search(**args):
+def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4):
+    Q_table = {}
+    vals = [list(np.round(np.linspace(env.warehouse.probLowerBound, env.warehouse.probUpperBound,
+                             (env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
+                             env.warehouse.increaseProb + 1), 2)),
+            list(range(0, truck_packages_quantiles + 2)), list(range(0, warehouse_packages_quantiles + 2))]
+
+    for val in itertools.product(*vals):
+        Q_table[val] = {"numVisits": 0, "Q": [0, 0]}
+
+    return Q_table
+
+
+def search(**kwargs):
     '''
     placeholder func
     '''
-    game = environment(**args)
-    game.simulation()
+    game = environment(**kwargs)
+    Q_table = init_Q_table(game)
 
-    return {} # up to designers
+    done = False
+    epoch = 0
+
+    while not done:
+        kwargs["cur_epoch"] = epoch
+        kwargs["Q_table"] = Q_table
+        game.simulation(**kwargs)
+        game.__init__(**kwargs)
+        epoch += 1
+
+    return {}  # up to designers

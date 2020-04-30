@@ -1,12 +1,13 @@
-from handleOutput import *
-from expSearch import *
+import sys
 import numpy as np
+
 
 def readFile(fileName):
     data = np.genfromtxt(fileName, delimiter=',')
-    #print(data.shape, data[0][0], type(data[0][0]))
+    # print(data.shape, data[0][0], type(data[0][0]))
 
     return data
+
 
 def formatError():
     ''' print out error and info to fix it '''
@@ -31,10 +32,9 @@ def repeatChoice(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks):
 
     print("Truck capacity:\t\t", truckCapacity)
     # print("-------------------------------------------")
-    
 
     print("Length of the road:\t", lengthOfRoad)
-    #print("-------------------------------------------")
+    # print("-------------------------------------------")
 
     print("Truck start penalty:\t", startingPenalty)
     print("-------------------------------------------")
