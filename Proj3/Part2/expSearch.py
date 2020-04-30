@@ -15,63 +15,65 @@ from handleInput import *
 from handleOutput import *
 from qLearning import *
 
+
 def hypers(data, moveCost, transitionProb, seed):
-	'''
-	all hypers should be defined here
-	returning the dict of them
-	'''
+    '''
+    all hypers should be defined here
+    returning the dict of them
+    '''
 
-	hyperDict = {
-		"randomSeed": seed,
+    hyperDict = {
+        "randomSeed": seed,
 
-		# settings for grid search
-		"lambda":	0,
-		"maxTime":	20,
-		"tol":		5e-4,
-		# ours:0, ramdom:1, epsilon-greedy:2
-		"algorithm": 0,
-		"epsilon": 0.1,
+        # settings for grid search
+        "lambda": 0,
+        "maxTime": 20,
+        "tol": 5e-4,
+        # ours:0, ramdom:1, epsilon-greedy:2
+        "algorithm": 0,
+        "epsilon": 0.1,
 
-		# predefined
-		"moveCost": moveCost,
-		"transitionProb": transitionProb,
-		"world": data,
-		"startPosition": (data.shape[0]-1, 0)
-	}
+        # predefined
+        "moveCost": moveCost,
+        "transitionProb": transitionProb,
+        "world": data,
+        "startPosition": (data.shape[0] - 1, 0),
+        "maxMoves": data.shape[0] * data.shape[1] * 100/24
+    }
 
-	return hyperDict
+    return hyperDict
 
 
 def main(seed=1):
-	# read inputs
-	try:
-		data, moveCost, transitionProb = readInput()
-	except Exception as e:
-		return False
-	
-	# make up hypers
-	hyperDict = hypers(data, moveCost, transitionProb, seed)
+    # read inputs
+    try:
+        data, moveCost, transitionProb = readInput()
+    except Exception as e:
+        return False
 
-	# run the program
-	results = search(**hyperDict)
+    # make up hypers
+    hyperDict = hypers(data, moveCost, transitionProb, seed)
 
-	# generate output
-	status = writeFile(results)
+    # run the program
+    results = search(**hyperDict)
 
-	return True
+    # generate output
+    status = writeFile(results)
+
+    return True
 
 
 if __name__ == '__main__':
-	# set up default display mode
-	np.set_printoptions(threshold=sys.maxsize)
-	# set random sequence
-	seed = 1
-	# seed = time.time()
-	random.seed(seed)
-	np.random.seed(seed)
+    # set up default display mode
+    np.set_printoptions(threshold=sys.maxsize)
+    # set random sequence
+    seed = 1
+    # seed = time.time()
+    random.seed(seed)
+    np.random.seed(seed)
 
-	# now ready to go
-	main(seed=seed)
+    # now ready to go
+    main(seed=seed)
 
 # sample cmd line to evoke:
 # python3 expSearch.py sample_grid.csv -0.04 0.6

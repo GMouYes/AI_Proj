@@ -4,24 +4,31 @@ for the exact search algorithm
 '''
 
 from expSearch import *
+import time
+import numpy as np
+import random
+import collections
+import itertools
+
 
 def search(**args):
     '''
     '''
     world = args["world"]
     height, width = world.shape
-    searchType = args["algorithm"]
+    # searchType = args["algorithm"]
     startPosition = args["startPosition"]
     moveCost = args["moveCost"]
     maxTime = args["maxTime"]
     transitionProb = args["transitionProb"]
     threshold = args["tol"]
+    maxMoves = args["maxMoves"]
 
     # policy = np.zeros((height, width))  # 0,1,2,3 indicating up, right, down, left
     # reward = np.zeros((height, width))  # real values
     Q = np.zeros((height, width, 4))
     Q, policy, time, epoch, reward = play(startPosition=startPosition, Q=Q, ratio=transitionProb, world=world, movecost=moveCost,
-                           maxtime=maxTime, threshold=threshold)
+                           maxtime=maxTime, threshold=threshold, maxMoves=maxMoves)
 
     # expected return: dict of following
     result = {
@@ -67,17 +74,27 @@ def update(Q, s, a, s_new, r, lr=0.1, gamma=0.95):
     return Q
 
 
-def play(startPosition, Q, ratio, world, movecost, maxtime, threshold):
+def play(startPosition, Q, ratio, world, movecost, maxtime, threshold, maxMoves):
     #height, width = np.shape(world)
     startTime = time.time()
     epoch = 0
-    
+    reward = 0
+    prev_policies = np.empty((world.shape[0], world.shape[1], 100))
+
     while True:
         epoch += 1
         # termination
         t = time.time()-startTime
         if t > maxtime-threshold:
             break
+
+        if epoch > 100:
+            # Convergence criterion
+            diffs = (prev_policies[:, :, 1:100] - prev_policies[:, :, 0:99])
+            diffs = np.abs(diffs) >= np.finfo(np.float).eps
+            diff_pct = np.sum(diffs, axis=(0, 1)) / (world.shape[0] * world.shape[1])
+            if np.all(diff_pct <= 0.01):
+                break
 
         position = startPosition
         stepCounter = 0
@@ -98,16 +115,19 @@ def play(startPosition, Q, ratio, world, movecost, maxtime, threshold):
             # update new position
             position = newPosition
             # ending criteria
-            if isEnd(world, newPosition):
+            if isEnd(world, newPosition) or stepCounter >= maxMoves:
                 break
         # final reward
         reward = pathReward(world, position, stepCounter, movecost)
+        prev_policies[:, :, 0:99] = prev_policies[:, :, 1:100]
+        prev_policies[:, :, 99] = np.argmax(Q, axis=-1)
         # debug print
         # endState(position, world, reward)
 
     policy = np.argmax(Q, axis=-1)
+    expected_reward = np.max(Q[startPosition])
 
-    return Q, policy, t, epoch, reward
+    return Q, policy, t, epoch, expected_reward
 
 
 def pathReward(world, position, stepCounter, moveCost):
@@ -117,6 +137,7 @@ def pathReward(world, position, stepCounter, moveCost):
 
 def isEnd(world, position: tuple):
     return True if world[position] != 0. else False
+
 
 def policyDirection(searchType, Q, position):
     # return direction based on algorithm

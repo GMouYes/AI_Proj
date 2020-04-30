@@ -1,9 +1,12 @@
 import numpy as np
+
+
 def handleTime(elapsedTime):
     ''' better format the elapsedTime into hour,min,sec,msec '''
     timeString = "{} hour {} min {} sec {} msec".format(elapsedTime // 3600, (elapsedTime % 3600) // 60,
                                                         int(elapsedTime % 60), int(1000 * (elapsedTime % 1)))
     return timeString
+
 
 def translatePolicy(policy):
     height,width = policy.shape
@@ -32,9 +35,15 @@ def writeFile(result: dict):
     print(translatePolicy(result["policy"]))
     print("-------------------------------------------")
     print("Q values:")
-    print("3D matrix of shape Height*Width*Direction")
-    print(result["Q"])
+    print("\nUp:")
+    print(result["Q"][:, :, 0])
+    print("\nRight:")
+    print(result["Q"][:, :, 1])
+    print("\nDown:")
+    print(result["Q"][:, :, 2])
+    print("\nLeft:")
+    print(result["Q"][:, :, 3])
     print("-------------------------------------------")
-    print("Last reward:", result["reward"])
+    print("Expected reward:", result["reward"])
 
     return True
