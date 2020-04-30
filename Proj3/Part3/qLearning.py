@@ -24,6 +24,7 @@ class truck(object):
         self.packageList = []
         self.reward = 0
         self.startPenalty = startPenalty
+        self.state = ()
 
         # 0: stay; 1: move forward; -1: move backward
         self.nextStep = 0
@@ -37,9 +38,9 @@ class truck(object):
         packageList = packageList[emptySpace:]
         return packageList
 
-    def decideAction(self, strategy):
+    def decideAction(self, **kwargs):
         # whether to wait:False or start:True
-        # TODO: implement
+        strategy = kwargs["algorithm"]
         if strategy == 0:
             # dummy strategy 0: always start so long as its not empty
             # this is for debugging
@@ -54,9 +55,47 @@ class truck(object):
 
         # you design other strategies
         else:
-            flag = True
+            chooseAction = self.policyAction(**kwargs)
+            flag = bool(self.trueAction(chooseAction, kwargs["epsilon"]))
 
         return flag
+
+    def get_state(self, prob, numPackagesInWarehouse, truck_package_quantiles, warehouse_package_quantiles):
+        if len(self.packageList) == 0:
+            truck_package_quantile = 0
+        else:
+            truck_package_quantile = int((len(self.packageList) / self.capacity) // (1 / truck_package_quantiles) + 1)
+
+        if numPackagesInWarehouse == 0:
+            warehouse_package_quantile = 0
+        elif numPackagesInWarehouse < self.capacity:
+            warehouse_package_quantile = int((numPackagesInWarehouse / self.capacity) //
+                                             (1 / warehouse_package_quantiles) + 1)
+        else:
+            warehouse_package_quantile = warehouse_package_quantiles + 1
+
+        return prob, truck_package_quantile, warehouse_package_quantile
+
+    def policyAction(self, **kwargs):
+        # return direction based on algorithm
+        searchType = kwargs["algorithm"]
+        if searchType in [0, 1]:
+            return random.randint(0, 1)
+
+        elif searchType == 2:
+            Q_table = kwargs["Q_table"]
+            self.state = self.get_state(kwargs["prob"], kwargs["numPackagesInWarehouse"],
+                                        kwargs["truck_package_quantiles"], kwargs["warehouse_package_quantiles"])
+
+            actions = Q_table[self.state]
+            max_value = np.max(actions)
+            choices = [index for index, value in enumerate(actions) if value == max_value]
+            return np.random.choice(choices, 1)[0]
+        return 0
+
+    @staticmethod
+    def trueAction(action, eps):
+        return random.choice([0, 1]) if random.random < eps else action
 
     def startDeliver(self):
         self.nextStep = 1
@@ -176,10 +215,12 @@ class environment(object):
         self.clock = 0
         self.lengthOfRoad = kwargs["lengthOfRoad"]
         self.maxTime = kwargs["maxTime"]
+        self.truck_package_quantiles = kwargs["truck_package_quantiles"]
+        self.warehouse_package_quantiles = kwargs["warehouse_package_quantiles"]
 
         self.packageNotOnTruck = []
 
-    def _iteration(self, strategy, **kwargs):
+    def _iteration(self, **kwargs):
         # first check ending standard
         if self.clock >= self.maxTime:
             return False
@@ -198,7 +239,10 @@ class environment(object):
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
-            flag = self.truck.decideAction(strategy=strategy)  # you decide the inputs
+            flag = self.truck.decideAction(**kwargs, prob=self.warehouse.prevProb, numPackagesInWarehouse=len(
+                self.packageNotOnTruck))
+            # you decide the inputs
+            # TODO: Figure out how to Q_update for actions below
             if flag:
                 self.truck.startDeliver()  # calculate reward, leaving warehouse
             else:
@@ -224,9 +268,8 @@ class environment(object):
     def simulation(self, **kwargs):
         # 1. test: strategy 0: pass!
         # 2. test: strategy 1: pass!
-        strategy = kwargs["algorithm"]
 
-        while self._iteration(strategy, **kwargs):
+        while self._iteration(**kwargs):
             # do anything
 
             # prints for debug, comment out in real case 
@@ -258,8 +301,8 @@ class environment(object):
 def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4):
     Q_table = {}
     vals = [list(np.round(np.linspace(env.warehouse.probLowerBound, env.warehouse.probUpperBound,
-                             (env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
-                             env.warehouse.increaseProb + 1), 2)),
+                                      (env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
+                                      env.warehouse.increaseProb + 1), 2)),
             list(range(0, truck_packages_quantiles + 2)), list(range(0, warehouse_packages_quantiles + 2))]
 
     for val in itertools.product(*vals):
@@ -279,10 +322,10 @@ def search(**kwargs):
     epoch = 0
 
     while not done:
-        kwargs["cur_epoch"] = epoch
         kwargs["Q_table"] = Q_table
         game.simulation(**kwargs)
         game.__init__(**kwargs)
+        kwargs["epsilon"] *= kwargs["decay_rate"]
         epoch += 1
 
     return {}  # up to designers

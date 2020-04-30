@@ -16,7 +16,7 @@ def search(**args):
     '''
     world = args["world"]
     height, width = world.shape
-    # searchType = args["algorithm"]
+    # searchType = kwargs["algorithm"]
     startPosition = args["startPosition"]
     moveCost = args["moveCost"]
     maxTime = args["maxTime"]

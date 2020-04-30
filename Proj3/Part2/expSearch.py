@@ -68,7 +68,7 @@ if __name__ == '__main__':
     np.set_printoptions(threshold=sys.maxsize)
     # set random sequence
     seed = 1
-    # seed = time.time()
+    # random_seed = time.time()
     random.seed(seed)
     np.random.seed(seed)
 

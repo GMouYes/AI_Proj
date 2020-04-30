@@ -34,6 +34,8 @@ def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, random_s
         "probLowerBound": 0.05,
         "deliveryMultiplier": 30,
         "defaultMaxTime": 1000,
+        "truck_package_quantiles": 4,
+        "warehouse_package_quantiles": 4,
 
         # not sure if we will use them
         # test1: 0, test2: 1, Q-table w/ eps-greedy decay: 2
