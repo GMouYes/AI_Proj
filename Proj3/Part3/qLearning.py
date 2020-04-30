@@ -35,7 +35,6 @@ class environment(object):
         self.warehouse = warehouse(**warehouseDict)
         self.truck = truck(**truckDict, env=self)
 
-        self.reward = 0
         self.clock = 0
         self.lengthOfRoad = kwargs["lengthOfRoad"]
         self.maxTime = kwargs["maxTime"]
@@ -48,7 +47,7 @@ class environment(object):
 
         self.packageNotOnTruck = []
 
-    def _iteration(self, **kwargs):
+    def _iteration(self):
         # first check ending standard
         if self.clock >= self.maxTime:
             return False
@@ -64,12 +63,15 @@ class environment(object):
 
         # is the truck currently at warehouse?
         if self.truck.currentPos == 0:
+            if self.truck.action_completed:
+                # If we finish an action, update the Q-table (for the previous state)
+                self.truck.action_completed = False
+                self.Q_update()
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
             flag = self.truck.decideAction()
             # you decide the inputs
-            # TODO: Figure out how to Q_update for actions below
             if flag:
                 self.truck.startDeliver()  # calculate reward, leaving warehouse
             else:
@@ -124,6 +126,14 @@ class environment(object):
         print("")
         return True
 
+    def Q_update(self, lr=0.1, gamma=0.95):
+        cur_state = self.truck.get_state()
+        new_reward = self.truck.reward - self.truck.prev_reward
+        self.Q_table[self.truck.prev_state]["Q"][self.truck.prev_action] = (1 - lr) * self.Q_table[
+            self.truck.prev_state]["Q"][self.truck.prev_action] + lr * (new_reward + gamma * np.max(
+            self.Q_table[cur_state]["Q"]))
+        self.Q_table[self.truck.prev_state]["numVisits"] += 1
+
 
 class truck(object):
     """docstring for truck"""
@@ -136,12 +146,15 @@ class truck(object):
         self.longestDestination = 0
         self.packageList = []
         self.reward = 0
+        self.prev_reward = 0
         self.startPenalty = startPenalty
         self._environment = env
-        self.state = ()
+        self.prev_state = ()
 
         # 0: stay; 1: move forward; -1: move backward
         self.nextStep = 0
+        self.prev_action = None
+        self.action_completed = False
 
     def loadPackage(self, packageList):
         # upload the packages to truck until capacity
@@ -170,7 +183,8 @@ class truck(object):
         # you design other strategies
         else:
             chooseAction = self.recommendedPolicyAction()
-            flag = bool(self.chosenAction(chooseAction, self._environment.eps))
+            self.prev_action = int(self.chosenAction(chooseAction, self._environment.eps))
+            flag = bool(self.prev_action)
 
         return flag
 
@@ -190,7 +204,8 @@ class truck(object):
         else:
             warehouse_package_quantile = self._environment.warehouse_package_quantiles + 1
 
-        return self._environment.warehouse.prevProb, truck_package_quantile, warehouse_package_quantile
+        return float(np.round(self._environment.warehouse.prevProb, 2)), truck_package_quantile, \
+               warehouse_package_quantile
 
     def recommendedPolicyAction(self):
         searchType = self._environment.algorithm
@@ -199,9 +214,10 @@ class truck(object):
             return random.randint(0, 1)
 
         elif searchType == 2:
-            self.state = self.get_state()
+            self.prev_state = self.get_state()
+            self.prev_reward = self.reward
 
-            actions = self._environment.Q_table[self.state]
+            actions = self._environment.Q_table[self.prev_state]["Q"]
             max_value = np.max(actions)
             choices = [index for index, value in enumerate(actions) if value == max_value]
             return np.random.choice(choices, 1)[0]
@@ -209,7 +225,7 @@ class truck(object):
 
     @staticmethod
     def chosenAction(action, eps):
-        return random.choice([0, 1]) if random.random < eps else action
+        return random.choice([0, 1]) if random.random() < eps else action
 
     def startDeliver(self):
         self.nextStep = 1
@@ -218,8 +234,8 @@ class truck(object):
 
     def deliver(self, lengthOfRoad):
         # split packages according to destination
-        arrivedPackage = [package for package in self.packageList if package.deliverHouse == self.currentPos]
-        self.packageList = [package for package in self.packageList if package.deliverHouse != self.currentPos]
+        arrivedPackage = [pkg for pkg in self.packageList if pkg.deliverHouse == self.currentPos]
+        self.packageList = [pkg for pkg in self.packageList if pkg.deliverHouse != self.currentPos]
         # delivery reward
         self.reward += self.multiplier * lengthOfRoad * len(arrivedPackage)
         # update next step strategy
@@ -233,13 +249,14 @@ class truck(object):
     def wait(self):
         # next step still same place
         self.nextStep = 0
+        self.action_completed = True
         return True
 
     def updatePos(self):
         self.currentPos += self.nextStep
-
-    def Q_update(self):
-        pass
+        if self.nextStep == -1 and self.currentPos == 0:
+            # Completed a delivery
+            self.action_completed = True
 
 
 class warehouse(object):
