@@ -41,4 +41,4 @@ def trainFunc():
 	endTime = time.time()
 	print(endTime-startTime)
 
-trainFunc()
+trainFunc() # takes about 60 secs, if we write logs, then about 90 secs

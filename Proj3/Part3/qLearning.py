@@ -25,6 +25,9 @@ class truck(object):
         # 0: stay; 1: move forward; -1: move backward
         self.nextStep = 0
 
+    def log(self):
+        return [self.currentPos, self.reward, self.packageList]
+
     def loadPackage(self, packageList):
         # upload the packages to truck until capacity
         # return the remaining packages
@@ -95,6 +98,9 @@ class warehouse(object):
         self.probLowerBound = probLowerBound
         self.increaseProb = increaseProb
         self.decreaseProb = decreaseProb
+
+    def log(self):
+        return [self.prevStatus, self.prevProb]
 
     def _getProb(self):
         if self.prevStatus:
@@ -175,6 +181,11 @@ class environment(object):
 
         self.packageNotOnTruck = []
 
+        self.logs = []
+
+    def log(self):
+        return [self.truck.log(), self.warehouse.log(), self.packageNotOnTruck]
+
     def features(self):
         pass
 
@@ -208,6 +219,8 @@ class environment(object):
             return (max(res) + min(res)) / 2
 
     def _iteration(self, strategy):
+        self.logs.append(self.log())
+
         # first check ending standard
         if self.clock >= self.maxTime:
             return False
