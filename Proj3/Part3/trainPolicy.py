@@ -32,13 +32,19 @@ def trainFunc():
 	hyper = [dict(zip(hypers.keys(),v)) for v in product(*hypers.values())]
 	
 	startTime = time.time()
-	myCounter = 1
+	# myCounter = 1
+	features,labels = [],[]
 	for hyperDict in hyper:
 		game = environment(**hyperDict)
 		game.simulation()
-		print(myCounter)
+		features.append(np.array(game.get_features_from_log()))
+		labels.append(np.array())
+
+		# print(myCounter)
 		myCounter += 1
 	endTime = time.time()
 	print(endTime-startTime)
+	features = np.concatenate(features, axis=0)
+
 
 trainFunc() # takes about 60 secs, if we write logs, then about 90 secs

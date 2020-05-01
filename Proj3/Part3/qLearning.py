@@ -289,7 +289,7 @@ class environment(object):
             # break
             continue
 
-        return  # up to you about what to return
+        return True
 
     def _stepCheck(self):
         print("Clock time:\t", self.clock)
