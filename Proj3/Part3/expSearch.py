@@ -76,7 +76,7 @@ def main(random_seed=1):
     results = search(**hyperDict)
 
     # generate output
-    # status = writeFile(results)
+    status = writeFile(results)
 
     return True
 

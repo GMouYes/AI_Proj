@@ -8,8 +8,10 @@ for the exact search algorithm
 from expSearch import *
 import time
 import numpy as np
+import pandas as pd
 import random
 import itertools
+import collections
 
 
 class environment(object):
@@ -41,6 +43,8 @@ class environment(object):
 
         self.algorithm = kwargs["algorithm"]
         self.Q_table = kwargs["Q_table"] if "Q_table" in kwargs else None
+        self.pol_table = kwargs["pol_table"] if "pol_table" in kwargs else None
+        self.training = kwargs["training"] if "training" in kwargs else False
         self.eps = kwargs["epsilon"]
         self.truck_package_quantiles = kwargs["truck_package_quantiles"]
         self.warehouse_package_quantiles = kwargs["warehouse_package_quantiles"]
@@ -66,7 +70,8 @@ class environment(object):
             if self.truck.action_completed:
                 # If we finish an action, update the Q-table (for the previous state)
                 self.truck.action_completed = False
-                self.Q_update()
+                if self.training:
+                    self.Q_update()
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
@@ -82,16 +87,24 @@ class environment(object):
 
         # for every package not yet delivered, calculate penalty
         if len(self.packageNotOnTruck) > 0:
-            timeDiff1 = sum([self.clock - package.createTime for package in self.packageNotOnTruck])
+            timeDiff1 = sum([self.clock - pkg.createTime for pkg in self.packageNotOnTruck])
         else:
             timeDiff1 = 0
 
         if len(self.truck.packageList) > 0:
-            timeDiff2 = sum([self.clock - package.createTime for package in self.truck.packageList])
+            timeDiff2 = sum([self.clock - pkg.createTime for pkg in self.truck.packageList])
         else:
             timeDiff2 = 0
 
         self.truck.reward -= (timeDiff1 + timeDiff2)
+
+        if len(self.truck.tick_rewards) == 0:
+            self.truck.tick_rewards.append(self.truck.reward)
+            self.truck.all_rewards.append(self.truck.reward)
+        else:
+            self.truck.tick_rewards.append(self.truck.reward - self.truck.tick_rewards[-1])
+            self.truck.all_rewards.append(self.truck.reward - self.truck.all_rewards[-1])
+
         return True
 
     def simulation(self):
@@ -102,7 +115,8 @@ class environment(object):
             # do anything
 
             # prints for debug, comment out in real case
-            self._stepCheck()
+            # self._stepCheck()
+            pass
 
             # 3. test: only do one step, uncomment next line
             # break
@@ -126,13 +140,23 @@ class environment(object):
         print("")
         return True
 
-    def Q_update(self, lr=0.1, gamma=0.95):
+    def Q_update(self, lr=0.1, gamma=0.9):
+        # Update Q-table
         cur_state = self.truck.get_state()
         new_reward = self.truck.reward - self.truck.prev_reward
         self.Q_table[self.truck.prev_state]["Q"][self.truck.prev_action] = (1 - lr) * self.Q_table[
             self.truck.prev_state]["Q"][self.truck.prev_action] + lr * (new_reward + gamma * np.max(
             self.Q_table[cur_state]["Q"]))
         self.Q_table[self.truck.prev_state]["numVisits"] += 1
+        # Update the dataframe storing our policy in a nice format
+        self.pol_table.loc[(self.pol_table["PkgProb"].values == self.truck.prev_state[0]) &
+                           (self.pol_table["TruckPkgQuantiles"].values == self.truck.prev_state[1]) &
+                           (self.pol_table["WarehousePkgQuantiles"].values == self.truck.prev_state[2]), "NumVisits"] =\
+            self.Q_table[self.truck.prev_state]["numVisits"]
+        self.pol_table.loc[(self.pol_table["PkgProb"].values == self.truck.prev_state[0]) &
+                           (self.pol_table["TruckPkgQuantiles"].values == self.truck.prev_state[1]) &
+                           (self.pol_table["WarehousePkgQuantiles"].values == self.truck.prev_state[2]), "Policy"] = \
+            int(np.argmax(self.Q_table[self.truck.prev_state]["Q"]))
 
 
 class truck(object):
@@ -155,6 +179,10 @@ class truck(object):
         self.nextStep = 0
         self.prev_action = None
         self.action_completed = False
+
+        self.max_stored_rewards = 100
+        self.tick_rewards = collections.deque(maxlen=self.max_stored_rewards)
+        self.all_rewards = []
 
     def loadPackage(self, packageList):
         # upload the packages to truck until capacity
@@ -326,7 +354,7 @@ def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4
     Q_table = {}
     vals = [list(np.round(np.linspace(env.warehouse.probLowerBound, env.warehouse.probUpperBound,
                                       (env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
-                                      env.warehouse.increaseProb + 1), 2)),
+                                      np.abs(env.warehouse.increaseProb) + 1), 2)),
             list(range(0, truck_packages_quantiles + 2)), list(range(0, warehouse_packages_quantiles + 2))]
 
     for val in itertools.product(*vals):
@@ -335,23 +363,67 @@ def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4
     return Q_table
 
 
+def init_policy_table(Q_table: dict, col_names: list):
+    pol_table = pd.DataFrame(Q_table.keys(), columns=col_names)
+    pol_table["NumVisits"] = -1
+    pol_table["Policy"] = -1
+    return pol_table
+
+
+def readable_policy_table(policy_table: pd.DataFrame):
+    policy_table.replace({"Policy": -1}, '?', inplace=True)
+    policy_table.replace({"Policy": 0}, "Wait", inplace=True)
+    policy_table.replace({"Policy": 1}, "Deliver", inplace=True)
+
+
 def search(**kwargs):
     '''
     placeholder func
     '''
     game = environment(**kwargs)
     Q_table = init_Q_table(game)
+    pol_table = init_policy_table(Q_table, ["PkgProb", "TruckPkgQuantiles", "WarehousePkgQuantiles"])
+
+    num_prev_policies = 100
+    prev_policies = np.empty((len(pol_table.index), 100))
+
     game.Q_table = Q_table
+    game.pol_table = pol_table
     decay_rate = kwargs["decay_rate"]
+    kwargs["training"] = True
 
     done = False
     epoch = 0
+    training_time = 0
+    start_time = time.time()
 
     while not done:
         kwargs["Q_table"] = game.Q_table
+        kwargs["pol_table"] = game.pol_table
         game.simulation()
         game.__init__(**kwargs)
         kwargs["epsilon"] *= decay_rate
         epoch += 1
 
-    return {}  # up to designers
+        prev_policies[:, 0:num_prev_policies - 1] = prev_policies[:, 1:num_prev_policies]
+        prev_policies[:, 99] = game.pol_table["Policy"].values
+
+        if epoch > num_prev_policies:
+            # Convergence criterion
+            diffs = (prev_policies[:, 1:num_prev_policies] - prev_policies[:, 0:num_prev_policies - 1])
+            diffs = np.abs(diffs) >= np.finfo(np.float).eps
+            diff_pct = np.sum(diffs, axis=0) / len(pol_table.index)
+            if np.all(diff_pct <= 0.005):
+                training_time = time.time() - start_time
+                done = True
+
+    kwargs["Q_table"] = game.Q_table
+    kwargs["pol_table"] = game.pol_table
+    kwargs["training"] = False
+    kwargs["maxTime"] = 10000
+    game = environment(**kwargs)
+    game.simulation()
+    readable_policy_table(game.pol_table)
+    # up to designers
+    return {"time": training_time, "Q_table": game.Q_table, "policy": game.pol_table, "reward": np.mean(
+        game.truck.all_rewards)}
