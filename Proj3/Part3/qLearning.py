@@ -9,6 +9,7 @@ import random
 
 from expSearch import *
 
+
 class truck(object):
     """docstring for truck"""
 
@@ -26,7 +27,7 @@ class truck(object):
         self.nextStep = 0
 
     def log(self):
-        return [self.currentPos, self.reward, self.packageList]
+        return [self.currentPos, self.reward, self.packageList, self.nextStep]
 
     def loadPackage(self, packageList):
         # upload the packages to truck until capacity
@@ -192,15 +193,20 @@ class environment(object):
                 self.warehouse.probLowerBound, self.warehouse.probUpperBound]
 
     def get_features_from_log(self):
-        features = []
-        for log in self.logs:
-            feature = [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
-                       len(log[0][2]), len(log[2]), log[1][1], self.warehouse.probUpperBound,
-                       self.warehouse.probLowerBound]
-            features.append(feature)
+        # return all the start points
+        logs = self.logs
+        # the first start point should be included
+        features = [[self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
+                     len(logs[0][0][2]), len(logs[0][2]), logs[0][1][1], self.warehouse.probUpperBound,
+                     self.warehouse.probLowerBound]]
+        for i in range(len(logs)):
+            if i < len(logs) - 1 and logs[i][0][0] == 1 and logs[i][0][3] == -1:
+                feature = [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
+                           len(logs[i + 1][0][2]), len(logs[i + 1][2]), logs[i + 1][1][1],
+                           self.warehouse.probUpperBound, self.warehouse.probLowerBound]
+                features.append(feature)
+        features.pop()
         return features
-
-
 
     def get_reward_list(self, trucks: list):
         index = []
@@ -312,17 +318,16 @@ class environment(object):
 def search(**args):
     '''
     '''
-    mode = "train" # "test"
-    policy = "function" # "table"
+    mode = "train"  # "test"
+    policy = "function"  # "table"
 
     if mode == "train":
         if policy == "function":
             trainFunc()
         else:
             pass
-    else: # test mode should also separate #TODO
+    else:  # test mode should also separate #TODO
         game = environment(**args)
         game.simulation()
-    
 
     return {}  # up to designers
