@@ -10,8 +10,10 @@ import time
 import numpy as np
 import random
 
+
 class truck(object):
     """docstring for truck"""
+
     def __init__(self, capacity, multiplier, startPenalty):
         super(truck, self).__init__()
         self.capacity = capacity
@@ -55,7 +57,7 @@ class truck(object):
 
     def startDeliver(self):
         self.nextStep = 1
-        self.reward +=  self.startPenalty
+        self.reward += self.startPenalty
         return True
 
     def deliver(self, lengthOfRoad):
@@ -81,8 +83,10 @@ class truck(object):
         self.currentPos += self.nextStep
         return True
 
+
 class warehouse(object):
     """docstring for warehouse"""
+
     def __init__(self, initProb, probUpperBound, probLowerBound, increaseProb, decreaseProb):
         super(warehouse, self).__init__()
         self.prevProb = initProb
@@ -115,7 +119,7 @@ class warehouse(object):
         else:
             status = False
         return status
-        
+
     def _createPackage(self, timestamp, lengthOfRoad):
         deliverHouse = random.randint(1, lengthOfRoad)
         newPackage = package(timestamp, deliverHouse)
@@ -133,16 +137,19 @@ class warehouse(object):
             return self._createPackage(timestamp, lengthOfRoad)
         return None
 
-        
+
 class package(object):
     """docstring for package"""
+
     def __init__(self, createTime, deliverHouse):
         super(package, self).__init__()
         self.createTime = createTime
         self.deliverHouse = deliverHouse
 
+
 class environment(object):
     """docstring for environment"""
+
     def __init__(self, **args):
         super(environment, self).__init__()
 
@@ -153,7 +160,7 @@ class environment(object):
             "increaseProb": args["increaseProb"],
             "decreaseProb": args["decreaseProb"],
         }
-        
+
         truckDict = {
             "capacity": args["truckCapacity"],
             "multiplier": args["deliveryMultiplier"],
@@ -168,7 +175,39 @@ class environment(object):
         self.lengthOfRoad = args["lengthOfRoad"]
         self.maxTime = args["maxTime"]
 
-        self.packageNotOnTruck =  []
+        self.packageNotOnTruck = []
+
+    def features(self):
+        pass
+
+    def get_reward_list(self, trucks: list):
+        index = []
+        # method 1
+        # for i in range(len(trucks)):
+        #     if not trucks[i].packageList and trucks[i].nextStep == -1:
+        #         while i < len(trucks):
+        #             i += 1
+        #             if trucks[i].postion == 0:
+        #                 index.append(i)
+        #                 break
+        # method 2
+        for i in range(len(trucks)):
+            if trucks[i].position == 1 and trucks[i].nextStep == -1:
+                if i < len(trucks) - 1:
+                    index.append(i + 1)
+
+        return [trucks[0]] + [trucks[i].reward for i in index]
+
+    def binary(self, rewards: list, binarytype: int):
+        res = []
+        for i in range(len(rewards) - 1):
+            res.append(rewards[i + 1] - rewards[i])
+        # cut according to index
+        if binarytype == 0:
+            return sorted(res)[len(rewards) - 1 // 2]
+        # cut according to value
+        if binarytype == 1:
+            return (max(res) + min(res)) / 2
 
     def _iteration(self, strategy):
         # first check ending standard
@@ -189,15 +228,15 @@ class environment(object):
             # load on truck, update remaining
             self.packageNotOnTruck = self.truck.loadPackage(self.packageNotOnTruck)
             # start the truck or not
-            flag = self.truck.decideAction(strategy=strategy) # you decide the inputs
+            flag = self.truck.decideAction(strategy=strategy)  # you decide the inputs
             if flag:
-                self.truck.startDeliver() # calculate reward, leaving warehouse
+                self.truck.startDeliver()  # calculate reward, leaving warehouse
             else:
-                self.truck.wait() # stay for the next clock tick
+                self.truck.wait()  # stay for the next clock tick
         # on its way, deliver things
         else:
             self.truck.deliver(self.lengthOfRoad)
-            
+
         # for every package not yet delivered, calculate penalty
         if len(self.packageNotOnTruck) > 0:
             timeDiff1 = sum([self.clock - package.createTime for package in self.packageNotOnTruck])
@@ -225,7 +264,7 @@ class environment(object):
             # 3. test: only do one step, uncomment next line
             # break
 
-        return # up to you about what to return
+        return  # up to you about what to return
 
     def _stepCheck(self):
         print("Clock time:\t", self.clock)
@@ -252,4 +291,4 @@ def search(**args):
     game = environment(**args)
     game.simulation()
 
-    return {} # up to designers
+    return {}  # up to designers
