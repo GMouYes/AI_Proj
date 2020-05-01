@@ -3,12 +3,12 @@ the actual q learning file
 for the exact search algorithm
 '''
 
-# import numpy as np
-
-from expSearch import *
 import time
 import numpy as np
 import random
+
+from expSearch import *
+from trainPolicy import *
 
 class truck(object):
     """docstring for truck"""
@@ -247,9 +247,18 @@ class environment(object):
 
 def search(**args):
     '''
-    placeholder func
     '''
-    game = environment(**args)
-    game.simulation()
+    mode = "train" # "test"
+    policy = "function" # "table"
+
+    if mode == "train":
+        if policy == "function":
+            
+        else:
+            pass
+    else: # test mode should also separate #TODO
+        game = environment(**args)
+        game.simulation()
+    
 
     return {} # up to designers
