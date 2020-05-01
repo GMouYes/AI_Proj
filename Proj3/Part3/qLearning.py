@@ -353,8 +353,8 @@ class package(object):
 def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4):
     Q_table = {}
     vals = [list(np.round(np.linspace(env.warehouse.probLowerBound, env.warehouse.probUpperBound,
-                                      (env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
-                                      np.abs(env.warehouse.increaseProb) + 1), 2)),
+                                      int((env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
+                                      np.abs(env.warehouse.increaseProb) + 1)), 2)),
             list(range(0, truck_packages_quantiles + 2)), list(range(0, warehouse_packages_quantiles + 2))]
 
     for val in itertools.product(*vals):
