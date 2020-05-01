@@ -191,6 +191,17 @@ class environment(object):
                 len(self.truck.packageList), len(self.packageNotOnTruck), self.warehouse._getProb(),
                 self.warehouse.probLowerBound, self.warehouse.probUpperBound]
 
+    def get_features_from_log(self):
+        features = []
+        for log in self.logs:
+            feature = [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
+                       len(log[0][2]), len(self.packageNotOnTruck), log[1][1], self.warehouse.probUpperBound,
+                       self.warehouse.probLowerBound]
+            features.append(feature)
+        return features
+
+
+
     def get_reward_list(self, trucks: list):
         index = []
         # method 1
