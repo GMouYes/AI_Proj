@@ -196,7 +196,7 @@ class environment(object):
                 if i < len(trucks) - 1:
                     index.append(i + 1)
 
-        return [trucks[0]] + [trucks[i].reward for i in index]
+        return [trucks[0].reward] + [trucks[i].reward for i in index]
 
     def binary(self, rewards: list, binarytype: int):
         res = []
