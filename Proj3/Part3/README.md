@@ -29,7 +29,6 @@ numpy
 sys
 time
 random
-pprint
 ```
 
 ### Command line
