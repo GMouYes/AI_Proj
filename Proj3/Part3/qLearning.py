@@ -195,7 +195,7 @@ class environment(object):
         features = []
         for log in self.logs:
             feature = [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
-                       len(log[0][2]), len(self.packageNotOnTruck), log[1][1], self.warehouse.probUpperBound,
+                       len(log[0][2]), len(log[2]), log[1][1], self.warehouse.probUpperBound,
                        self.warehouse.probLowerBound]
             features.append(feature)
         return features
