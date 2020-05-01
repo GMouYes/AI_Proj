@@ -3,13 +3,11 @@ the actual q learning file
 for the exact search algorithm
 '''
 
-from expSearch import *
-from trainPolicy import *
-
 import time
 import numpy as np
 import random
 
+from expSearch import *
 
 class truck(object):
     """docstring for truck"""
@@ -259,10 +257,11 @@ class environment(object):
             # do anything
 
             # prints for debug, comment out in real case 
-            self._stepCheck()
+            # self._stepCheck()
 
             # 3. test: only do one step, uncomment next line
             # break
+            continue
 
         return  # up to you about what to return
 
@@ -292,7 +291,7 @@ def search(**args):
 
     if mode == "train":
         if policy == "function":
-            
+            trainFunc()
         else:
             pass
     else: # test mode should also separate #TODO

@@ -1,7 +1,11 @@
 
 
-def trainingFunc():
-	hyperDict = {
+from expSearch import *
+
+from itertools import product
+
+def trainFunc():
+	hypers = {
 
 		# settings for search
 		"initCreateProb": [0.13],
@@ -22,7 +26,19 @@ def trainingFunc():
 		"truckCapacity":	[i for i in range(5,51)],
 		"startTruckPenalty":	[-i for i in range(5,101)],
 		"lengthOfRoad":	[i for i in range(5,51)],
-		"maxTime":	[1000]
+		"maxTime":	[100]
 	}
 
-	new_paras = [dict(zip(hyperDict.keys(),v)) for v in itertools.product(*hyperDict.values())]
+	hyper = [dict(zip(hypers.keys(),v)) for v in product(*hypers.values())]
+	
+	startTime = time.time()
+	myCounter = 1
+	for hyperDict in hyper:
+		game = environment(**hyperDict)
+		game.simulation()
+		print(myCounter)
+		myCounter += 1
+	endTime = time.time()
+	print(endTime-startTime)
+
+trainFunc()
