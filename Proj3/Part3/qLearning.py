@@ -365,7 +365,7 @@ def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4
 
 def init_policy_table(Q_table: dict, col_names: list):
     pol_table = pd.DataFrame(Q_table.keys(), columns=col_names)
-    pol_table["NumVisits"] = -1
+    pol_table["NumVisits"] = 0
     pol_table["Policy"] = -1
     return pol_table
 
