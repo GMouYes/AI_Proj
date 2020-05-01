@@ -46,6 +46,8 @@ class environment(object):
         self.pol_table = kwargs["pol_table"] if "pol_table" in kwargs else None
         self.training = kwargs["training"] if "training" in kwargs else False
         self.eps = kwargs["epsilon"]
+        self.decay_rate = kwargs["decay_rate"]
+        self.updateEps = kwargs["updateEps"]
         self.truck_package_quantiles = kwargs["truck_package_quantiles"]
         self.warehouse_package_quantiles = kwargs["warehouse_package_quantiles"]
 
@@ -104,6 +106,9 @@ class environment(object):
         else:
             self.truck.tick_rewards.append(self.truck.reward - self.truck.tick_rewards[-1])
             self.truck.all_rewards.append(self.truck.reward - self.truck.all_rewards[-1])
+
+        if self.updateEps:
+            self.eps *= self.decay_rate
 
         return True
 
@@ -354,7 +359,7 @@ def init_Q_table(env, truck_packages_quantiles=4, warehouse_packages_quantiles=4
     Q_table = {}
     vals = [list(np.round(np.linspace(env.warehouse.probLowerBound, env.warehouse.probUpperBound,
                                       int((env.warehouse.probUpperBound - env.warehouse.probLowerBound) /
-                                      np.abs(env.warehouse.increaseProb) + 1)), 2)),
+                                          np.abs(env.warehouse.increaseProb) + 1)), 2)),
             list(range(0, truck_packages_quantiles + 2)), list(range(0, warehouse_packages_quantiles + 2))]
 
     for val in itertools.product(*vals):
@@ -380,6 +385,11 @@ def search(**kwargs):
     '''
     placeholder func
     '''
+    termAtConvergence = kwargs["termAtConvergence"] if "termAtConvergence" in kwargs else False
+    decay_rate = kwargs["decay_rate"] if not termAtConvergence else 0.999
+    kwargs["updateEps"] = (not termAtConvergence)
+    kwargs["training"] = True
+
     game = environment(**kwargs)
     Q_table = init_Q_table(game)
     pol_table = init_policy_table(Q_table, ["PkgProb", "TruckPkgQuantiles", "WarehousePkgQuantiles"])
@@ -389,8 +399,8 @@ def search(**kwargs):
 
     game.Q_table = Q_table
     game.pol_table = pol_table
-    decay_rate = kwargs["decay_rate"]
-    kwargs["training"] = True
+
+    getAvgReward = False
 
     done = False
     epoch = 0
@@ -401,28 +411,34 @@ def search(**kwargs):
         kwargs["Q_table"] = game.Q_table
         kwargs["pol_table"] = game.pol_table
         game.simulation()
-        game.__init__(**kwargs)
-        kwargs["epsilon"] *= decay_rate
-        epoch += 1
 
-        prev_policies[:, 0:num_prev_policies - 1] = prev_policies[:, 1:num_prev_policies]
-        prev_policies[:, 99] = game.pol_table["Policy"].values
+        if termAtConvergence:
+            game.__init__(**kwargs)
+            kwargs["epsilon"] *= decay_rate
+            epoch += 1
 
-        if epoch > num_prev_policies:
-            # Convergence criterion
-            diffs = (prev_policies[:, 1:num_prev_policies] - prev_policies[:, 0:num_prev_policies - 1])
-            diffs = np.abs(diffs) >= np.finfo(np.float).eps
-            diff_pct = np.sum(diffs, axis=0) / len(pol_table.index)
-            if np.all(diff_pct <= 0.005):
-                training_time = time.time() - start_time
-                done = True
+            prev_policies[:, 0:num_prev_policies - 1] = prev_policies[:, 1:num_prev_policies]
+            prev_policies[:, 99] = game.pol_table["Policy"].values
+
+            if epoch > num_prev_policies:
+                # Convergence criterion
+                diffs = (prev_policies[:, 1:num_prev_policies] - prev_policies[:, 0:num_prev_policies - 1])
+                diffs = np.abs(diffs) >= np.finfo(np.float).eps
+                diff_pct = np.sum(diffs, axis=0) / len(pol_table.index)
+                if np.all(diff_pct <= 0.005):
+                    training_time = time.time() - start_time
+                    done = True
+
+        else:
+            done = True
 
     kwargs["Q_table"] = game.Q_table
     kwargs["pol_table"] = game.pol_table
     kwargs["training"] = False
     kwargs["maxTime"] = 10000
-    game = environment(**kwargs)
-    game.simulation()
+    if getAvgReward:
+        game = environment(**kwargs)
+        game.simulation()
     readable_policy_table(game.pol_table)
     # up to designers
     return {"time": training_time, "Q_table": game.Q_table, "policy": game.pol_table, "reward": np.mean(

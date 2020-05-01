@@ -42,7 +42,7 @@ def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, random_s
         "lambda": 0,
         "algorithm": 2,
         "epsilon": 0.1,
-        "decay_rate": 0.999,
+        "decay_rate": 0.95,
 
         # predefined by cmd line input
         "truckCapacity": truckCapacity,
@@ -53,6 +53,7 @@ def hypers(truckCapacity, lengthOfRoad, startingPenalty, maxClockTicks, random_s
 
     if hyperDict["maxTime"] == -1:
         hyperDict["maxTime"] = hyperDict["defaultMaxTime"]
+        hyperDict["termAtConvergence"] = True
 
     # print(hyperDict)
 
