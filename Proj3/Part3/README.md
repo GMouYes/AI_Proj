@@ -1,4 +1,4 @@
-# EM for soft clustering
+# RL Robotic Truck Driver
 ## Files under the folder
 There are 4 python files and 1 readme file in the current folder:\
 Python files:
@@ -46,3 +46,4 @@ python3 expSearch.py
 Results will be printed out automatically. The following information will be shown:
 * Training time
 * Best Policy of the map
+* Average reward
