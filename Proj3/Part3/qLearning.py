@@ -187,7 +187,9 @@ class environment(object):
         return [self.truck.log(), self.warehouse.log(), self.packageNotOnTruck]
 
     def features(self):
-        pass
+        return [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
+                len(self.truck.packageList), len(self.packageNotOnTruck), self.warehouse._getProb(),
+                self.warehouse.probLowerBound, self.warehouse.probUpperBound]
 
     def get_reward_list(self, trucks: list):
         index = []
