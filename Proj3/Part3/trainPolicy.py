@@ -1,8 +1,10 @@
 
 
 from expSearch import *
+from model import *
 
 from itertools import product
+from statistics import median
 
 def trainFunc():
 	hypers = {
@@ -37,20 +39,31 @@ def trainFunc():
 	for hyperDict in hyper:
 		game = environment(**hyperDict)
 		game.simulation()
-		features.append(np.array(game.get_features_from_log()))
-		labels.append(np.array())
+
+		feature = game.get_features_from_log()
+		label = game.get_rewards_from_log()
+
+		if len(feature) > 0 and len(label) > 0:
+			# checker for safety
+			# if len(feature) != len(label):
+				# print(len(feature), len(label))
+				# break
+			features.append(np.array(feature))
+			labels.append(np.array(label))
 
 		# print(myCounter)
-		myCounter += 1
+		# myCounter += 1
 	endTime = time.time()
 	print(endTime-startTime)
 	
 	features = np.concatenate(features, axis=0)
 	labels = np.concatenate(labels, axis=0)
 
-	model = 
+	labels = labels > median(labels)
 
-def ():
-	pass
+	print("shape:", features.shape, labels.shape)
 
-trainFunc() # takes about 60 secs, if we write logs, then about 90 secs
+	model = buildModel(features,labels)
+	return model
+
+trainFunc() # takes about 60 secs, if we write logs, then about 150 secs

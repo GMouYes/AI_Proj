@@ -203,8 +203,19 @@ class environment(object):
         '''
         # return all the start points
         logs = self.logs
-        # the first start point should be included
         features = []
+        # print(len(logs))
+        # the first start point should be included
+        for j in range(len(logs)):
+            if logs[j][0][0] == 1 and logs[j][0][3] == 1:
+                maxDistance = 0
+                if len(logs[j-1][0][2]) > 0:
+                    maxDistance = max([item.deliverHouse for item in logs[j-1][0][2]])
+                features.append([self.truck.capacity, self.truck.startPenalty, self.lengthOfRoad,
+                           len(logs[j-1][0][2]), len(logs[j-1][2]), 
+                           logs[j-1][1][0], logs[j-1][1][1], maxDistance])
+                break
+        
 
         for i in range(len(logs)-1):
             # prevPos = 1, direction = -1, then next step returned
@@ -217,12 +228,15 @@ class environment(object):
                            logs[i+1][1][0], logs[i+1][1][1], maxDistance
                            ]
                 features.append(feature)
+        if len(features) <= 1:
+            return []
         features.pop()
         return features
 
-    def get_rewards(self):
+    def get_rewards_from_log(self):
         # return all the start points
         logs = self.logs
+        rewards = []
         # the first start point should be included
         for j in range(len(logs)):
             if logs[j][0][0] == 1 and logs[j][0][3] == 1:
@@ -234,6 +248,9 @@ class environment(object):
             # prevPos = 1, direction = -1, then next step returned
             if logs[i][0][0] == 1 and logs[i][0][3] == -1:
                 rewards.append(logs[i+1][0][1])
+
+        if len(rewards) <= 2:
+            return []
 
         period = [rewards[i+1] - rewards[i] for i in range(len(rewards)-1)]
 
@@ -287,7 +304,7 @@ class environment(object):
     def simulation(self):
         # 1. test: strategy 0: pass!
         # 2. test: strategy 1: pass!
-        strategy = 1
+        strategy = 0
         while self._iteration(strategy):
             # do anything
 
@@ -321,12 +338,12 @@ class environment(object):
 def search(**args):
     '''
     '''
-    mode = "train"  # "test"
-    policy = "function"  # "table"
+    mode = "train"  # test/train
+    policy = "function"  # table/function
 
     if mode == "train":
         if policy == "function":
-            trainFunc()
+            model = trainFunc()
         else:
             pass
     else:  # test mode should also separate #TODO

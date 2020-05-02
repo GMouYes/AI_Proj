@@ -6,21 +6,9 @@ Created on Wed Feb 20 21:41:02 2019
 @author: mgy
 """
 
-from sklearn.linear_model import LogisticRegression as LR
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier as DTC
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.neural_network import MLPClassifier as MLP
 
 from sklearn.model_selection import train_test_split as TTS, GridSearchCV as GCV
-from sklearn import preprocessing
-from sklearn.metrics import confusion_matrix, classification_report
-from sklearn.metrics import f1_score
-
-from imblearn.over_sampling import SMOTE
-from imblearn.combine import SMOTEENN
 
 import numpy as np
 import pickle
@@ -56,7 +44,7 @@ def simplifiedTest(target,parameters, X_train,X_test,y_train,y_test,outputResult
     outputResult.put((parameters,F1))
 
 def myParallel(model,parameter,X_train,X_valid,y_train,y_valid,new_paras):
-    parallelProcesses = 80
+    parallelProcesses = 16
 # =============================================================================
 #     pool = mp.Pool(processes=20)
 #     argList = []
@@ -146,7 +134,7 @@ def buildModel(X,y):
     
     #countData(y_train)
     #countData(y_test)
-    RandomForest(X_train, X_test, y_train, y_test)
+    model = RandomForest(X_train, X_test, y_train, y_test)
     
     return model
     
