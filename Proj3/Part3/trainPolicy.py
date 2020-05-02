@@ -62,8 +62,10 @@ def trainFunc():
 	labels = labels > median(labels)
 
 	print("shape:", features.shape, labels.shape)
-
+	startTime = time.time()
 	model = buildModel(features,labels)
+	endTime = time.time()
+	print(endTime-startTime)
 	return model
 
 trainFunc() # takes about 60 secs, if we write logs, then about 150 secs

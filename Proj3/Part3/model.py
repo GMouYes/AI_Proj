@@ -10,6 +10,8 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 
 from sklearn.model_selection import train_test_split as TTS, GridSearchCV as GCV
 
+from sklearn.metrics import f1_score
+
 import numpy as np
 import pickle
 import random
