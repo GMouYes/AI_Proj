@@ -15,7 +15,7 @@ import collections
 
 
 class environment(object):
-    """docstring for environment"""
+    """ environment for whole simulation"""
 
     def __init__(self, **kwargs):
         super(environment, self).__init__()
@@ -383,7 +383,7 @@ def readable_policy_table(policy_table: pd.DataFrame):
 
 def search(**kwargs):
     '''
-    placeholder func
+    function to be called by main
     '''
     termAtConvergence = kwargs["termAtConvergence"] if "termAtConvergence" in kwargs else False
     decay_rate = kwargs["decay_rate"] if not termAtConvergence else 0.999

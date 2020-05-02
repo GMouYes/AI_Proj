@@ -4,7 +4,7 @@ There are 4 python files and 1 readme file in the current folder:\
 Python files:
 ```
 expSearch.py		where main function locates
-aLearning.py		where algorithm locates
+qLearning.py		where algorithm locates
 handleInput.py		consumes input and interpret them
 handleOutput.py		print out cleaner format of model results
 ```
@@ -29,6 +29,10 @@ numpy
 sys
 time
 random
+pprint
+itertools
+collections
+pandas
 ```
 
 ### Command line
