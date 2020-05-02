@@ -44,7 +44,13 @@ def trainFunc():
 		myCounter += 1
 	endTime = time.time()
 	print(endTime-startTime)
+	
 	features = np.concatenate(features, axis=0)
+	labels = np.concatenate(labels, axis=0)
 
+	model = 
+
+def ():
+	pass
 
 trainFunc() # takes about 60 secs, if we write logs, then about 90 secs
