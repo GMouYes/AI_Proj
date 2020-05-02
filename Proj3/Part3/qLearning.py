@@ -187,23 +187,38 @@ class environment(object):
     def log(self):
         return [self.truck.log(), self.warehouse.log(), self.packageNotOnTruck]
 
-    def features(self):
-        return [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
-                len(self.truck.packageList), len(self.packageNotOnTruck), self.warehouse._getProb(),
-                self.warehouse.probLowerBound, self.warehouse.probUpperBound]
-
     def get_features_from_log(self):
+        '''
+        features to include:
+            capacity
+            startPenalty
+            lengthOfRoad
+
+            #packages on truck
+            #packages not on truck
+
+            #prevStatus
+            #prevProb
+            #longestDis
+        '''
         # return all the start points
         logs = self.logs
         # the first start point should be included
-        features = [[self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
-                     len(logs[0][0][2]), len(logs[0][2]), logs[0][1][1], self.warehouse.probUpperBound,
-                     self.warehouse.probLowerBound]]
-        for i in range(len(logs)):
-            if i < len(logs) - 1 and logs[i][0][0] == 1 and logs[i][0][3] == -1:
-                feature = [self.truck.capacity, self.truck.multiplier, self.truck.startPenalty, self.lengthOfRoad,
-                           len(logs[i + 1][0][2]), len(logs[i + 1][2]), logs[i + 1][1][1],
-                           self.warehouse.probUpperBound, self.warehouse.probLowerBound]
+        features = [[self.truck.capacity, self.truck.startPenalty, self.lengthOfRoad,
+                     len(logs[0][0][2]), len(logs[0][2]), 
+                     logs[0][1][0], logs[0][1][1], 0
+                     ]]
+
+        for i in range(len(logs)-1):
+            # prevPos = 1, direction = -1, then next step returned
+            if logs[i][0][0] == 1 and logs[i][0][3] == -1:
+                maxDistance = 0
+                if len(logs[i+1][0][2]) > 0:
+                    maxDistance = max([item.deliverHouse for item in logs[i+1][0][2]])
+                feature = [self.truck.capacity, self.truck.startPenalty, self.lengthOfRoad,
+                           len(logs[i+1][0][2]), len(logs[i+1][2]), 
+                           logs[i+1][1][0], logs[i+1][1][1], maxDistance
+                           ]
                 features.append(feature)
         features.pop()
         return features
@@ -238,7 +253,6 @@ class environment(object):
             return (max(res) + min(res)) / 2
 
     def _iteration(self, strategy):
-        self.logs.append(self.log())
 
         # first check ending standard
         if self.clock >= self.maxTime:
@@ -248,6 +262,8 @@ class environment(object):
         # then update warehouse and truck
         result = self.warehouse.updateWarehouse(self.clock, self.lengthOfRoad)
         _ = self.truck.updatePos()
+
+        self.logs.append(self.log())
 
         # load into lists
         if result is not None:
