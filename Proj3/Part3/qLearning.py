@@ -64,8 +64,8 @@ class truck(object):
 
     def deliver(self, lengthOfRoad):
         # split packages according to destination
-        arrivedPackage = [package for package in self.packageList if package.deliverHouse == self.currentPos]
-        self.packageList = [package for package in self.packageList if package.deliverHouse != self.currentPos]
+        arrivedPackage = [item for item in self.packageList if item.deliverHouse == self.currentPos]
+        self.packageList = [item for item in self.packageList if item.deliverHouse != self.currentPos]
         # delivery reward
         self.reward += self.multiplier * lengthOfRoad * len(arrivedPackage)
         # update next step strategy
@@ -204,10 +204,7 @@ class environment(object):
         # return all the start points
         logs = self.logs
         # the first start point should be included
-        features = [[self.truck.capacity, self.truck.startPenalty, self.lengthOfRoad,
-                     len(logs[0][0][2]), len(logs[0][2]), 
-                     logs[0][1][0], logs[0][1][1], 0
-                     ]]
+        features = []
 
         for i in range(len(logs)-1):
             # prevPos = 1, direction = -1, then next step returned
@@ -223,34 +220,24 @@ class environment(object):
         features.pop()
         return features
 
-    def get_reward_list(self, trucks: list):
-        index = []
-        # method 1
-        # for i in range(len(trucks)):
-        #     if not trucks[i].packageList and trucks[i].nextStep == -1:
-        #         while i < len(trucks):
-        #             i += 1
-        #             if trucks[i].postion == 0:
-        #                 index.append(i)
-        #                 break
-        # method 2
-        for i in range(len(trucks)):
-            if trucks[i].position == 1 and trucks[i].nextStep == -1:
-                if i < len(trucks) - 1:
-                    index.append(i + 1)
+    def get_rewards(self):
+        # return all the start points
+        logs = self.logs
+        # the first start point should be included
+        for j in range(len(logs)):
+            if logs[j][0][0] == 1 and logs[j][0][3] == 1:
+                rewards = [logs[j-1][0][1]]
+                break
 
-        return [trucks[0].reward] + [trucks[i].reward for i in index]
 
-    def binary(self, rewards: list, binarytype: int):
-        res = []
-        for i in range(len(rewards) - 1):
-            res.append(rewards[i + 1] - rewards[i])
-        # cut according to index
-        if binarytype == 0:
-            return sorted(res)[len(rewards) - 1 // 2]
-        # cut according to value
-        if binarytype == 1:
-            return (max(res) + min(res)) / 2
+        for i in range(j, len(logs)-1):
+            # prevPos = 1, direction = -1, then next step returned
+            if logs[i][0][0] == 1 and logs[i][0][3] == -1:
+                rewards.append(logs[i+1][0][1])
+
+        period = [rewards[i+1] - rewards[i] for i in range(len(rewards)-1)]
+
+        return period
 
     def _iteration(self, strategy):
 
@@ -285,12 +272,12 @@ class environment(object):
 
         # for every package not yet delivered, calculate penalty
         if len(self.packageNotOnTruck) > 0:
-            timeDiff1 = sum([self.clock - package.createTime for package in self.packageNotOnTruck])
+            timeDiff1 = sum([self.clock - item.createTime for item in self.packageNotOnTruck])
         else:
             timeDiff1 = 0
 
         if len(self.truck.packageList) > 0:
-            timeDiff2 = sum([self.clock - package.createTime for package in self.truck.packageList])
+            timeDiff2 = sum([self.clock - item.createTime for item in self.truck.packageList])
         else:
             timeDiff2 = 0
 
