@@ -120,7 +120,7 @@ class environment(object):
             # do anything
 
             # prints for debug, comment out in real case
-            # self._stepCheck()
+            # game._stepCheck()
             pass
 
             # 3. test: only do one step, uncomment next line

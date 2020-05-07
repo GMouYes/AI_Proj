@@ -8,7 +8,7 @@ from utils import write_to_disk
 
 
 class GameManager(object):
-    def __init__(self, cls, screen, high_score_file, file_name):
+    def __init__(self, cls, screen, high_score_file, file_name, **kwargs):
         # Stores the initialization status as this might crash.
         self.created = False
 
@@ -61,7 +61,7 @@ class GameManager(object):
                 if read:
                     self.game = self.game_class.from_save(read, self, screen)
                 else:
-                    self.new_game()
+                    self.new_game(**kwargs)
                 self.save_file.seek(0, os.SEEK_SET)
 
                 print('Running as instance #%d.' % (i,))
@@ -85,9 +85,9 @@ class GameManager(object):
                 raise
             return os.open(name, os.O_RDWR | os.O_EXCL)
 
-    def new_game(self):
+    def new_game(self, **kwargs):
         """Creates a new game of 2048."""
-        self.game = self.game_class(self, self.screen)
+        self.game = self.game_class(self, self.screen, **kwargs)
         self.save()
 
     def _load_score(self):

@@ -73,7 +73,7 @@ class Game2048(object):
         (131072, (94, 94, 255), (249, 246, 242)),
     )
 
-    def __init__(self, manager, screen, grid=None, score=0, won=0):
+    def __init__(self, manager, screen, grid=None, score=0, won=0, **kwargs):
         """Initializes the game."""
         # Stores the manager, screen, score, state, and winning status.
         self.manager = manager
@@ -83,6 +83,9 @@ class Game2048(object):
         # Whether the game is won, 0 if not, 1 to show the won overlay,
         # Anything above to represent continued playing.
         self.won = won
+
+        # Keyword arguments to govern AI behavior
+        self.AI_args = kwargs
 
         self.lost = False
         self.tiles = {}
@@ -166,6 +169,16 @@ class Game2048(object):
         self.losing_overlay, self._lost_try_again = self._make_lost_overlay()
         self.won_overlay, self._keep_going, self._won_try_again = self._make_won_overlay()
         self.title, self._new_game = self._make_title()
+
+    @property
+    def keep_going_pos(self):
+        x1, y1, x2, y2 = self._keep_going
+        return (x1 + x2) / 2, (y1 + y2) / 2
+
+    @property
+    def lost_try_again_pos(self):
+        x1, y1, x2, y2 = self._lost_try_again
+        return (x1 + x2) / 2, (y1 + y2) / 2
 
     @classmethod
     def icon(cls, size):
@@ -292,7 +305,7 @@ class Game2048(object):
         return any(cell == 0 for row in self.grid for cell in row)
 
     def _can_cell_be_merged(self, x, y):
-        """Checks if a cell can be merged, when the """
+        """Checks if a cell can be merged"""
         value = self.grid[y][x]
         if y > 0 and self.grid[y - 1][x] == value:  # Cell above
             return True
@@ -515,7 +528,7 @@ class Game2048(object):
 
     def on_mouse_up(self, event):
         if self._is_in_restart(*event.pos) or self._is_in_try_again(*event.pos):
-            self.manager.new_game()
+            self.manager.new_game(**self.AI_args)
         elif self._is_in_keep_going(*event.pos):
             self.won += 1
 

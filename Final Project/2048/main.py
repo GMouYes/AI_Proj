@@ -1,4 +1,7 @@
 import os
+import sys
+import argparse
+import statistics as stats
 
 import errno
 import pygame
@@ -6,11 +9,14 @@ from appdirs import user_data_dir
 
 from game import Game2048
 from manager import GameManager
+import AI
 
 
-def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None):
+def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwargs):
     pygame.init()
     pygame.display.set_caption(title)
+
+    AI_type = kwargs["AI_type"]
 
     # Try to set the game icon.
     try:
@@ -28,21 +34,69 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None):
             if e.errno != errno.EEXIST:
                 raise
 
+    score_file_prefix = os.path.join(data_dir, '2048')
+    state_file_prefix = os.path.join(data_dir, '2048')
+
+    if AI_type:
+        score_file_prefix += '_' + AI_type
+        state_file_prefix += '_' + AI_type
+
     screen = pygame.display.set_mode((game_class.WIDTH, game_class.HEIGHT))
     manager = GameManager(Game2048, screen,
-                          os.path.join(data_dir, '2048.score'),
-                          os.path.join(data_dir, '2048.%d.state'))
-    try:
-        while True:
-            event = pygame.event.wait()
-            manager.dispatch(event)
-            for event in pygame.event.get():
+                          score_file_prefix + '.score',
+                          state_file_prefix + '.%d.state', **kwargs)
+    if not AI_type:
+        try:
+            while True:
+                event = pygame.event.wait()
                 manager.dispatch(event)
-            manager.draw()
-    finally:
-        pygame.quit()
-        manager.close()
+                for event in pygame.event.get():
+                    manager.dispatch(event)
+                manager.draw()
+
+        finally:
+            pygame.quit()
+            manager.close()
+
+    else:
+        try:
+            pygame.event.set_blocked([pygame.KEYDOWN, pygame.MOUSEBUTTONUP])
+            game_scores = []
+            condition = True
+
+            while condition:
+                if manager.game.lost:
+                    event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.lost_try_again_pos})
+                    game_scores.append(manager.game.score)
+                    if AI_type == "heuristic":
+                        condition = kwargs["num_games"] > len(game_scores)
+                elif manager.game.won == 1:
+                    event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.keep_going_pos})
+                elif AI_type == "heuristic":
+                    event = AI.heuristic_move_event(manager.game)
+                else:
+                    raise ValueError("AI mode selected but invalid AI type was supplied!")
+                manager.dispatch(event)
+                manager.draw()
+
+            pygame.quit()
+            manager.close()
+            print("Number of games played:", len(game_scores))
+            print("Max Score:", max(game_scores))
+            print("Average Score:", stats.mean(game_scores))
+
+        finally:
+            pygame.quit()
+            manager.close()
 
 
 def main():
-    run_game()
+    # Parse command line args
+    parser = argparse.ArgumentParser(description="Play 2048, or choose an AI to play instead!")
+    parser.add_argument('--AI_type', action='store_true')
+    subparsers = parser.add_subparsers(dest='AI_type')
+    heuristic_parser = subparsers.add_parser("heuristic")
+    heuristic_parser.add_argument("num_games", nargs='?', default=10)
+    kwargs = vars(parser.parse_args(sys.argv[1:]))
+
+    run_game(**kwargs)
