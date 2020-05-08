@@ -12,3 +12,16 @@ packages are required:
 * `appdirs`
 
 Both are available in the PyPI and can be installed using `pip`.
+
+## Usage
+
+Currently, the script can be run as follows, with optional arguments in brackets:
+
+`python __main__.py [-h|--help] [--AI_type] {heuristic} ...`, where
+* `-h|--help`: Displays command help
+* `--AI_type`: If supplied, a valid AI type and the associated parameters must be supplied; else, the game starts
+normally, with full human control. Valid types are:
+    * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
+    `... heuristic [-h|--help] [num_games]`:
+        * `-h|--help`: Displays command help
+        * `num_games`: The number of games for the AI to play. The default is 10.
