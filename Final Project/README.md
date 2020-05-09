@@ -17,11 +17,16 @@ Both are available in the PyPI and can be installed using `pip`.
 
 Currently, the script can be run as follows, with optional arguments in brackets:
 
-`python __main__.py [-h|--help] [--AI_type] {heuristic} ...`, where
+`python __main__.py [-h|--help] [--AI_type] {random,heuristic} ...`, where
 * `-h|--help`: Displays command help
 * `--AI_type`: If supplied, a valid AI type and the associated parameters must be supplied; else, the game starts
 normally, with full human control. Valid types are:
-    * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
-    `... heuristic [-h|--help] [num_games]`:
+    * `random`: Makes random moves. Possible arguments are `... random [-h|--help] [num_games]`:
         * `-h|--help`: Displays command help
+        * `num_games`: The number of games for the AI to play. The default is 10.
+    * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
+    `... heuristic [-h|--help] [-t|--type {1,2}] [num_games]`:
+        * `-h|--help`: Displays command help
+        * `-t|--type {1,2}`: The type of heuristic to use. Type 1 makes any merge it can. Type 2 tries to play a bit
+        smarter, moving the highest tile in the bottom right and keeping it there, if possible. The default is type 2.
         * `num_games`: The number of games for the AI to play. The default is 10.

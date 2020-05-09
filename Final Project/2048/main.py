@@ -41,6 +41,10 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
         score_file_prefix += '_' + AI_type
         state_file_prefix += '_' + AI_type
 
+    if AI_type == "heuristic":
+        score_file_prefix += str(kwargs["type"])
+        state_file_prefix += str(kwargs["type"])
+
     screen = pygame.display.set_mode((game_class.WIDTH, game_class.HEIGHT))
     manager = GameManager(Game2048, screen,
                           score_file_prefix + '.score',
@@ -68,12 +72,14 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 if manager.game.lost:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.lost_try_again_pos})
                     game_scores.append(manager.game.score)
-                    if AI_type == "heuristic":
+                    if AI_type in ["random", "heuristic"]:
                         condition = kwargs["num_games"] > len(game_scores)
                 elif manager.game.won == 1:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.keep_going_pos})
+                elif AI_type == "random":
+                    event = AI.random_move_event()
                 elif AI_type == "heuristic":
-                    event = AI.heuristic_move_event(manager.game)
+                    event = AI.heuristic_move_event(manager.game, kwargs["type"])
                 else:
                     raise ValueError("AI mode selected but invalid AI type was supplied!")
                 manager.dispatch(event)
@@ -95,7 +101,12 @@ def main():
     parser = argparse.ArgumentParser(description="Play 2048, or choose an AI to play instead!")
     parser.add_argument('--AI_type', action='store_true')
     subparsers = parser.add_subparsers(dest='AI_type')
+
+    random_parser = subparsers.add_parser("random")
+    random_parser.add_argument("num_games", nargs='?', default=10)
+
     heuristic_parser = subparsers.add_parser("heuristic")
+    heuristic_parser.add_argument('-t', "--type", nargs='?', choices=[1, 2], default=2, type=int)
     heuristic_parser.add_argument("num_games", nargs='?', default=10)
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
