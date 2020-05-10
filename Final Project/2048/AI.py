@@ -65,6 +65,7 @@ def random_move_event():
                                                                      pygame.K_RIGHT])})
 
 
+# TODO: Actually trim events to only legal moves
 def heuristic_move_event(game: Game2048, heuristic_type=1):
     grid = np.array(game.grid)
     moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
@@ -91,15 +92,35 @@ def heuristic_move_event(game: Game2048, heuristic_type=1):
 
     if heuristic_type == 2:
         max_pos = np.unravel_index(grid.argmax(), grid.shape)
-        if np.sum(grid[:, max_pos[1]] != 0) == grid.shape[1]:
-            if np.sum(grid[max_pos[0], :] != 0) == grid.shape[0]:
-                return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN,
-                                                                                 pygame.K_LEFT, pygame.K_RIGHT])})
+        if np.any((np.sum(grid > 0, axis=0) > 0) & (np.sum(grid > 0, axis=0) < grid.shape[1])):
+            # If going vertically is legal
+            if np.any((np.sum(grid > 0, axis=1) > 0) & (np.sum(grid > 0, axis=1) < grid.shape[0])):
+                # If going horizontally is legal
+                if np.sum(grid[:, max_pos[1]] != 0) == grid.shape[1]:
+                    # If going vertically is safe
+                    if np.sum(grid[max_pos[0], :] != 0) == grid.shape[0]:
+                        # If going horizontally is safe, can choose any direction
+                        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN,
+                                                                                         pygame.K_LEFT,
+                                                                                         pygame.K_RIGHT])})
+                    else:
+                        # Only going vertically is safe
+                        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choices([pygame.K_UP, pygame.K_DOWN,
+                                                                                          pygame.K_LEFT,
+                                                                                          pygame.K_RIGHT],
+                                                                                         weights=[4, 4, 1, 4])[0]})
+                else:
+                    # All choices equally unsafe; play cautiously
+                    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choices([pygame.K_UP, pygame.K_DOWN,
+                                                                                      pygame.K_LEFT, pygame.K_RIGHT],
+                                                                                     weights=[1, 4, 1, 4])[0]})
             else:
+                # Can't go horizontal; pick a vertical move
                 return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN])})
         else:
+            # Can't go vertical; pick a horizontal move
             return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_LEFT, pygame.K_RIGHT])})
 
     else:
         return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT,
-                                                                     pygame.K_RIGHT])})
+                                                                         pygame.K_RIGHT])})

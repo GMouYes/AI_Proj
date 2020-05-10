@@ -59,7 +59,7 @@ class GameManager(object):
 
                 read = self.save_file.read()
                 if read:
-                    self.game = self.game_class.from_save(read, self, screen)
+                    self.game = self.game_class.from_save(read, self, screen, **kwargs)
                 else:
                     self.new_game(**kwargs)
                 self.save_file.seek(0, os.SEEK_SET)

@@ -411,7 +411,8 @@ class Game2048(object):
         # Loop through every frame.
         for frame in range(self.ANIMATION_FRAMES):
             # Limit at 60 fps.
-            clock.tick(60)
+            if not self.AI_args["AI_type"]:
+                clock.tick(60)
 
             # Pump events.
             pygame.event.pump()
