@@ -3,6 +3,10 @@ import numpy as np
 import pygame
 from game import Game2048
 
+_MOVES = ["Up", "Down", "Left", "Right"]
+
+_KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
+
 
 def _get_merge_directions(grid: np.ndarray):
     move_list = [[] for _ in range(grid.size)]
@@ -60,12 +64,79 @@ def _heuristic_choose_direction(moves: list, heuristic_type=1):
             return random.choice(moves)
 
 
-def random_move_event():
-    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT,
-                                                                     pygame.K_RIGHT])})
+def random_move_event(game: Game2048):
+    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(
+        game.grid)])})
 
 
-# TODO: Actually trim events to only legal moves
+def quick_merge_row(row, right=True):
+    """
+    Quick merge for a single row, courtesy of
+    https://stackoverflow.com/questions/22970210/most-efficient-way-to-shift-and-merge-the-elements-of-a-list-in-python-2048
+
+    Works for columns as well (right = down in that case)
+
+    :param row: Row of the game grid to merge
+    :param right: Whether to merge to the right or to the left (right by default)
+    :return: The merged row
+    """
+    if right:
+        row = row[::-1]
+    values = []
+    empty = 0
+    for n in row:
+        if values and n == values[-1]:
+            values[-1] = 2 * n
+            empty += 1
+        elif n:
+            values.append(n)
+        else:
+            empty += 1
+    values += [0] * empty
+    if right:
+        values = values[::-1]
+    return values
+
+
+def quick_merge(grid: np.ndarray, direction: str):
+    merged = grid.copy()
+    if direction in ["Up", "Down"]:
+        for c in range(grid.shape[1]):
+            merged[:, c] = quick_merge_row(grid[:, c], direction == "Down")
+
+    else:
+        for r in range(grid.shape[0]):
+            merged[r, :] = quick_merge_row(grid[r, :], direction == "Right")
+
+    return merged
+
+
+def simulate_move(grid: np.ndarray, direction: str):
+    grid = quick_merge(grid, direction)
+    r, c = np.where(grid != 0)
+    i = random.choice(range(len(r)))
+    grid[r[i], c[i]] = 2 if random.random() < 0.9 else 4
+    return grid
+
+
+def is_valid_move(grid: np.ndarray, direction: str):
+    return ~np.all(grid == quick_merge(grid, direction))
+
+
+def valid_moves(grid: np.ndarray):
+    return [move for move in _MOVES if is_valid_move(grid, move)]
+
+
+def is_safe_move(grid: np.ndarray, direction: str):
+    max_pos = np.unravel_index(grid.argmax(), grid.shape)
+    new_max_pos = np.unravel_index(quick_merge(grid, direction).argmax(), grid.shape)
+    return is_valid_move(grid, direction) and np.all(new_max_pos >= max_pos)
+
+
+def safe_moves(grid: np.ndarray):
+    return [move for move in _MOVES if is_safe_move(grid, move)]
+
+
 def heuristic_move_event(game: Game2048, heuristic_type=1):
     grid = np.array(game.grid)
     moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
@@ -91,36 +162,13 @@ def heuristic_move_event(game: Game2048, heuristic_type=1):
             return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RIGHT})
 
     if heuristic_type == 2:
-        max_pos = np.unravel_index(grid.argmax(), grid.shape)
-        if np.any((np.sum(grid > 0, axis=0) > 0) & (np.sum(grid > 0, axis=0) < grid.shape[1])):
-            # If going vertically is legal
-            if np.any((np.sum(grid > 0, axis=1) > 0) & (np.sum(grid > 0, axis=1) < grid.shape[0])):
-                # If going horizontally is legal
-                if np.sum(grid[:, max_pos[1]] != 0) == grid.shape[1]:
-                    # If going vertically is safe
-                    if np.sum(grid[max_pos[0], :] != 0) == grid.shape[0]:
-                        # If going horizontally is safe, can choose any direction
-                        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN,
-                                                                                         pygame.K_LEFT,
-                                                                                         pygame.K_RIGHT])})
-                    else:
-                        # Only going vertically is safe
-                        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choices([pygame.K_UP, pygame.K_DOWN,
-                                                                                          pygame.K_LEFT,
-                                                                                          pygame.K_RIGHT],
-                                                                                         weights=[4, 4, 1, 4])[0]})
-                else:
-                    # All choices equally unsafe; play cautiously
-                    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choices([pygame.K_UP, pygame.K_DOWN,
-                                                                                      pygame.K_LEFT, pygame.K_RIGHT],
-                                                                                     weights=[1, 4, 1, 4])[0]})
-            else:
-                # Can't go horizontal; pick a vertical move
-                return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN])})
+        valid = valid_moves(grid)
+        safe = safe_moves(grid)
+        if safe:
+            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in safe])})
         else:
-            # Can't go vertical; pick a horizontal move
-            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_LEFT, pygame.K_RIGHT])})
+            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid])})
 
     else:
-        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT,
-                                                                         pygame.K_RIGHT])})
+        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(
+            game.grid)])})
