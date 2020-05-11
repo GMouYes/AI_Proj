@@ -11,6 +11,44 @@ _MOVES = ["Up", "Down", "Left", "Right"]
 _KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
 
 
+class _Node(object):
+    def __init__(self):
+        self.depth = 0
+        self.num_visits = 0
+        self.avg_score = 0
+        self.parent = None
+        super(_Node, self).__init__()
+
+
+class StateNode(_Node):
+    def __init__(self, state: np.ndarray):
+        self.state = state
+        self.moves = {}  # Maps strings ("Up", "Down",...) to MoveNodes
+        super(StateNode, self).__init__()
+
+    def __hash__(self):
+        return str(self.state.tolist())
+
+
+class MoveNode(_Node):
+    def __init__(self, move: str):
+        self.move = move
+        self.states = {}  # Maps string representations of states to StateNodes
+        super(MoveNode, self).__init__()
+
+    def __hash__(self):
+        return self.move
+
+
+class GameTree(object):
+    def __init__(self, grid: np.ndarray, max_search_depth=20, num_rollouts=500, epsilon=0.1):
+        self.root = StateNode(np.copy(grid))
+        self.cur_node = self.root
+        super(GameTree, self).__init__()
+
+        # TODO: Add function for MCTS, e.g. MCTS() -> move
+
+
 def _get_merge_directions(grid: np.ndarray):
     move_list = [[] for _ in range(grid.size)]
     ind_array = np.arange(grid.size).reshape(grid.shape)
@@ -116,13 +154,14 @@ def quick_merge(grid: np.ndarray, direction: str):
 
 def simulate_move(grid: np.ndarray, direction: str):
     grid = quick_merge(grid, direction)
-    r, c = np.where(grid != 0)
+    r, c = np.where(grid == 0)
     i = random.choice(range(len(r)))
     grid[r[i], c[i]] = 2 if random.random() < 0.9 else 4
     return grid
 
 
 def is_valid_move(grid: np.ndarray, direction: str):
+    test = simulate_move(grid, direction)
     return ~np.all(grid == quick_merge(grid, direction))
 
 
@@ -226,6 +265,6 @@ def heuristic_move_event(game: Game2048, heuristic_type="greedy"):
         valid = valid_moves(grid)
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, monotonicity)]})
 
-    else:  # Smoothness
+    else:  # Smooth
         valid = valid_moves(grid)
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, smoothness)]})
