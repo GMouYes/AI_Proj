@@ -159,8 +159,8 @@ def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np
             move_evals.append(eval_func(grid, new_grid))
         else:
             move_evals.append(eval_func(grid))
-
-    return moves[int(np.argmin(move_evals))]
+    move_evals = np.array(move_evals)
+    return moves[np.random.choice(move_evals[move_evals == move_evals.min()])]
 
 
 def move_diff(cur_grid: np.ndarray, new_grid: np.ndarray):
