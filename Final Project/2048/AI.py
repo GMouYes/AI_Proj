@@ -1,4 +1,7 @@
 import random
+from inspect import signature
+from typing import Callable, Union
+
 import numpy as np
 import pygame
 from game import Game2048
@@ -137,6 +140,44 @@ def safe_moves(grid: np.ndarray):
     return [move for move in _MOVES if is_safe_move(grid, move)]
 
 
+def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np.ndarray], Union[int, float, complex]],
+                                                                    Callable[[np.ndarray, np.ndarray],
+                                                                             Union[int, float, complex]]]):
+    """
+    Choose a move to take based on an evaluation function. The move chosen will be the argmin of the function.
+    :param grid: The current game grid
+    :param moves: A list of moves to evaluate. Possible values are "Up", "Down", "Left", "Right"
+    :param eval_func: The evaluation function, which will be evaluated using the current grid and/or the grids
+                      resulting from making the moves in 'moves'. This can either have the signature eval_func(
+                      new_grid) -> Number or eval_func(cur_grid, new_grid) -> Number.
+    :return: The chosen move. This will be the argmin of 'eval_func' when it is evaluated for each move.
+    """
+    move_evals = []
+    for move in moves:
+        new_grid = quick_merge(grid, move)
+        if len(signature(eval_func).parameters) == 2:
+            move_evals.append(eval_func(grid, new_grid))
+        else:
+            move_evals.append(eval_func(grid))
+
+    return moves[int(np.argmin(move_evals))]
+
+
+def move_diff(cur_grid: np.ndarray, new_grid: np.ndarray):
+    return int(np.sum(new_grid[new_grid != cur_grid]))
+
+
+def smoothness(grid: np.ndarray):
+    return np.abs(grid - np.pad(grid, ((1, 0), (0, 0)))[:-1, 0]) + \
+           np.abs(grid - np.pad(grid, ((0, 1), (0, 0)))[1:, 0]) + \
+           np.abs(grid - np.pad(grid, ((0, 0), (1, 0)))[0, :-1]) + \
+           np.abs(grid - np.pad(grid, ((0, 0), (0, 1)))[0, 1:])
+
+
+def monotonicity(grid: np.ndarray):
+    return np.sum((grid < np.roll(grid, 1, axis=0))[1:, :]) + np.sum((grid < np.roll(grid, 1, axis=1))[:, 1:])
+
+
 def heuristic_move_event(game: Game2048, heuristic_type=1):
     grid = np.array(game.grid)
     moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
@@ -168,6 +209,14 @@ def heuristic_move_event(game: Game2048, heuristic_type=1):
             return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in safe])})
         else:
             return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid])})
+
+    elif heuristic_type == 3:
+        valid = valid_moves(grid)
+        safe = safe_moves(grid)
+        if safe:
+            return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, safe, move_diff)]})
+        else:
+            return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, move_diff)]})
 
     else:
         return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(
