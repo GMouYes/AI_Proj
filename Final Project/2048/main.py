@@ -106,7 +106,8 @@ def main():
     random_parser.add_argument("num_games", nargs='?', default=10)
 
     heuristic_parser = subparsers.add_parser("heuristic")
-    heuristic_parser.add_argument('-t', "--type", nargs='?', choices=[1, 2, 3], default=2, type=int)
+    heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
+                                                                      "smooth"], default="safe", type=str)
     heuristic_parser.add_argument("num_games", nargs='?', default=10)
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 

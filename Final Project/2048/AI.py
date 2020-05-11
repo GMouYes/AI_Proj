@@ -42,7 +42,7 @@ def _get_merge_directions(grid: np.ndarray):
     return move_list
 
 
-def _heuristic_choose_direction(moves: list, heuristic_type=1):
+def _heuristic_choose_direction(moves: list, heuristic_type="greedy"):
     """
     Given a list of possible merge directions, chooses a direction to move. Heuristic type 1 picks any possible
     merge; heuristic type 2 prioritizes moving to the bottom right, since grouping the largest tiles is an effective
@@ -54,7 +54,7 @@ def _heuristic_choose_direction(moves: list, heuristic_type=1):
     """
     if len(moves) == 0:
         return False
-    elif heuristic_type == 1:
+    elif heuristic_type == "greedy":
         return random.choice(moves)
     else:
         if "Down" in moves:
@@ -158,9 +158,9 @@ def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np
         if len(signature(eval_func).parameters) == 2:
             move_evals.append(eval_func(grid, new_grid))
         else:
-            move_evals.append(eval_func(grid))
+            move_evals.append(eval_func(new_grid))
     move_evals = np.array(move_evals)
-    return moves[np.random.choice(move_evals[move_evals == move_evals.min()])]
+    return moves[np.random.choice(np.flatnonzero(move_evals == move_evals.min()))]
 
 
 def move_diff(cur_grid: np.ndarray, new_grid: np.ndarray):
@@ -178,46 +178,54 @@ def monotonicity(grid: np.ndarray):
     return np.sum((grid < np.roll(grid, 1, axis=0))[1:, :]) + np.sum((grid < np.roll(grid, 1, axis=1))[:, 1:])
 
 
-def heuristic_move_event(game: Game2048, heuristic_type=1):
+def heuristic_move_event(game: Game2048, heuristic_type="greedy"):
     grid = np.array(game.grid)
-    moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
-    moves = np.array(moves)
-    inds = grid.argsort(axis=None)[::-1]
-    cell_move_priority = inds[grid.flatten()[inds] != 0]
-    for move_ind in cell_move_priority:
-        if moves[move_ind] == "Up":
-            if heuristic_type == 1:
-                return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_UP})
-            else:
-                # If up is an option, there is a companion tile that can merge down
+    if heuristic_type in ["greedy", "safe", "safest"]:
+        moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
+        moves = np.array(moves)
+        inds = grid.argsort(axis=None)[::-1]
+        cell_move_priority = inds[grid.flatten()[inds] != 0]
+        for move_ind in cell_move_priority:
+            if moves[move_ind] == "Up":
+                if heuristic_type == "greedy":
+                    return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_UP})
+                else:
+                    # If up is an option, there is a companion tile that can merge down
+                    return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_DOWN})
+            elif moves[move_ind] == "Down":
                 return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_DOWN})
-        elif moves[move_ind] == "Down":
-            return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_DOWN})
-        elif moves[move_ind] == "Left":
-            if heuristic_type == 1:
-                return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_LEFT})
-            else:
-                # If left is an option, there is a companion tile that can merge right
+            elif moves[move_ind] == "Left":
+                if heuristic_type == "greedy":
+                    return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_LEFT})
+                else:
+                    # If left is an option, there is a companion tile that can merge right
+                    return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RIGHT})
+            elif moves[move_ind] == "Right":
                 return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RIGHT})
-        elif moves[move_ind] == "Right":
-            return pygame.event.Event(pygame.KEYDOWN, {"key": pygame.K_RIGHT})
 
-    if heuristic_type == 2:
-        valid = valid_moves(grid)
-        safe = safe_moves(grid)
-        if safe:
-            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in safe])})
+        if heuristic_type == "safe":
+            valid = valid_moves(grid)
+            safe = safe_moves(grid)
+            if safe:
+                return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in safe])})
+            else:
+                return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid])})
+
+        elif heuristic_type == "safest":
+            valid = valid_moves(grid)
+            safe = safe_moves(grid)
+            if safe:
+                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, safe, move_diff)]})
+            else:
+                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, move_diff)]})
+
         else:
-            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid])})
+            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(grid)])})
 
-    elif heuristic_type == 3:
+    elif heuristic_type == "monotonic":
         valid = valid_moves(grid)
-        safe = safe_moves(grid)
-        if safe:
-            return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, safe, move_diff)]})
-        else:
-            return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, move_diff)]})
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, monotonicity)]})
 
-    else:
-        return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(
-            game.grid)])})
+    else:  # Smoothness
+        valid = valid_moves(grid)
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, smoothness)]})
