@@ -25,8 +25,18 @@ normally, with full human control. Valid types are:
         * `-h|--help`: Displays command help
         * `num_games`: The number of games for the AI to play. The default is 10.
     * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
-    `... heuristic [-h|--help] [-t|--type {1,2}] [num_games]`:
+    `... heuristic [-h|--help] [-t|--type {greedy,safe,safest,monotonic,smooth}] [num_games]`:
         * `-h|--help`: Displays command help
-        * `-t|--type {1,2}`: The type of heuristic to use. Type 1 makes any merge it can. Type 2 tries to play a bit
-        smarter, moving the highest tile in the bottom right and keeping it there, if possible. The default is type 2.
+        * `-t|--type {greedy,safe,safest,monotonic,smooth}`: The type of heuristic to use.
+            * `greedy` makes any merge it can.
+            * `safe` tries to play a bit smarter, moving the highest tile in the bottom right and keeping it there,
+            if possible.
+            * `safest` takes caution a bit further. When no merges are possible and there are multiple "safe" moves to
+            choose from, it picks the move that moves the group of tiles with the lowest value (moving larger tiles is
+            more risky).
+            * `monotonic` prioritizes monotonicity. Tiles should be increasing across rows and down columns.
+            * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each,
+            since this can lead to merging opportunities.
+            
+            The default is type `safe`.
         * `num_games`: The number of games for the AI to play. The default is 10.
