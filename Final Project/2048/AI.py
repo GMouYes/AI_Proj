@@ -162,6 +162,7 @@ def rollouts(grid: np.ndarray, score, heuristic_type=None, max_search_depth=10, 
     move_visits = [0] * len(moves)
     move_scores = [0] * len(moves)
     for move in range(len(moves)):
+        # TODO: Parallelize?
         new_grid, new_score = simulate_move(grid, moves[move], score)
         avg_score = 0
         if len(valid_moves(new_grid)) == 0:

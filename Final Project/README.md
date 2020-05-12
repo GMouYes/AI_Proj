@@ -50,7 +50,7 @@ normally, with full human control. Valid types are:
         * `-d|--max_depth [MAX_DEPTH]`: The maximum number of moves to run per simulation. Default is 4.
         * `-e|--epsilon [EPSILON]`: The exploration rate; the chance of making a random move during a simulation instead
         of the known best. Default is 0.1.
-        * `[-U|--UCT]`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
+        * `-U|--UCT`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
         Default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
