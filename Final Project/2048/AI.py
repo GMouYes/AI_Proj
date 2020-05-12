@@ -103,25 +103,25 @@ class GameTree(object):
                 if len(valid_moves(search_node.state)) == 0:
                     break
                 # Choose a move
-                if len(search_node.unvisited) > 0:
-                    ind = random.choice(range(len(search_node.unvisited)))
-                    move = search_node.unvisited[ind]
-                    del search_node.unvisited[ind]
-
                 else:
                     if self.UCT:
-                        move = search_node.select_next_move(self.max_score)
+                        if len(search_node.unvisited) > 0:
+                            ind = random.choice(range(len(search_node.unvisited)))
+                            move = search_node.unvisited[ind]
+                            del search_node.unvisited[ind]
+                        else:
+                            move = search_node.select_next_move(self.max_score)
                     else:
                         if random.random() < self.epsilon:
                             move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
                         else:
-                            if len(search_node.moves) == 0:
+                            # if len(search_node.moves) == 0:
                                 moves = []
-                                for h_type in HEURISTICS:
+                                for h_type in ["monotonic"]:
                                     moves.append(_REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
                                 move = random.choice(moves)
-                            else:
-                                move = search_node.get_best_move()
+                            # else:
+                            #     move = search_node.get_best_move()
 
                 # Add move to children if not present
                 search_node.add_move(move)
