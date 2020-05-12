@@ -97,60 +97,80 @@ class GameTree(object):
             self.cur_node = self.cur_node.moves[hash(self.last_move)].states[hash(str(cur_grid.tolist()))]
             self.cur_node.visit_score = cur_score
 
-        search_node = self.cur_node
-        for _ in range(self.num_rollouts):
-            for _ in range(self.max_search_depth):
-                if len(valid_moves(search_node.state)) == 0:
-                    break
-                # Choose a move
-                else:
-                    if self.UCT:
-                        if len(search_node.unvisited) > 0:
-                            ind = random.choice(range(len(search_node.unvisited)))
-                            move = search_node.unvisited[ind]
-                            del search_node.unvisited[ind]
-                        else:
-                            move = search_node.select_next_move(self.max_score)
-                    else:
-                        if random.random() < self.epsilon:
-                            move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
-                        else:
-                            # if len(search_node.moves) == 0:
-                            moves = []
-                            for h_type in ["safest", "corner_dist"]:
-                                moves.append(
-                                    _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
-                            move = random.choice(moves)
-                        # else:
-                        #     move = search_node.get_best_move()
+        moves = valid_moves(self.cur_node.state)
 
-                # Add move to children if not present
-                search_node.add_move(move)
-                move_node = search_node.moves[hash(move)]
+        for move in moves:
+            # Add move to children if not present
+            self.cur_node.add_move(move)
+            move_node = self.cur_node.moves[hash(move)]
 
-                # Simulate move
-                new_state, new_score = simulate_move(search_node.state, move, search_node.visit_score)
-                move_node.add_state(new_state)
-                search_node = move_node.states[hash(str(new_state.tolist()))]
-                search_node.visit_score = new_score
-                self.max_score = max(self.max_score, new_score)
+            # Simulate move
+            new_state, new_score = simulate_move(self.cur_node.state, move, cur_score)
+            move_node.add_state(new_state)
+            search_node = move_node.states[hash(str(new_state.tolist()))]
+            search_node.visit_score = new_score
+            self.max_score = max(self.max_score, new_score)
 
-            # All moves simulated; do backup
-            while search_node != self.cur_node:
+            if len(valid_moves(new_state)) == 0:
                 search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
                         search_node.num_visits + 1)
                 search_node.num_visits += 1
-                parent_move = search_node.parent
-                parent_move.visit_score = search_node.visit_score
-                parent_move.avg_score = search_node.avg_score
-                parent_move.num_visits += 1
-                search_node = parent_move.parent
-                search_node.visit_score = parent_move.visit_score
+                continue
 
-            # Update the node for the current state (for sake of completeness)
-            search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
-                    search_node.num_visits + 1)
-            search_node.num_visits += 1
+            for _ in range(self.num_rollouts):
+                for _ in range(self.max_search_depth):
+                    if len(valid_moves(search_node.state)) == 0:
+                        break
+                    # Choose a move
+                    else:
+                        if self.UCT:
+                            if len(search_node.unvisited) > 0:
+                                ind = random.choice(range(len(search_node.unvisited)))
+                                move = search_node.unvisited[ind]
+                                del search_node.unvisited[ind]
+                            else:
+                                move = search_node.select_next_move(self.max_score)
+                        else:
+                            if random.random() < self.epsilon:
+                                move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                            else:
+                                # if len(search_node.moves) == 0:
+                                moves = []
+                                for h_type in ["smooth"]:
+                                    moves.append(
+                                        _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
+                                move = random.choice(moves)
+                            # else:
+                            #     move = search_node.get_best_move()
+
+                    # Add move to children if not present
+                    search_node.add_move(move)
+                    move_node = search_node.moves[hash(move)]
+
+                    # Simulate move
+                    new_state, new_score = simulate_move(search_node.state, move, search_node.visit_score)
+                    move_node.add_state(new_state)
+                    search_node = move_node.states[hash(str(new_state.tolist()))]
+                    search_node.visit_score = new_score
+                    self.max_score = max(self.max_score, new_score)
+
+                # All moves simulated; do backup
+                while search_node != self.cur_node:
+                    search_node.avg_score = search_node.avg_score + (
+                                search_node.visit_score - search_node.avg_score) / (
+                                                    search_node.num_visits + 1)
+                    search_node.num_visits += 1
+                    parent_move = search_node.parent
+                    parent_move.visit_score = search_node.visit_score
+                    parent_move.avg_score = search_node.avg_score
+                    parent_move.num_visits += 1
+                    search_node = parent_move.parent
+                    search_node.visit_score = parent_move.visit_score
+
+                # Update the node for the current state (for sake of completeness)
+                search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
+                        search_node.num_visits + 1)
+                search_node.num_visits += 1
 
         # Choose best move
         self.last_move = self.cur_node.get_best_move()

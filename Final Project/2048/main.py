@@ -84,7 +84,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                     raise ValueError("Epsilon must be in the interval [0, 1].")
                 if AI_type == "MCTS":
                     UCT = kwargs["UCT"]
-                    tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon, UCT)
+                    tree = AI.GameTree(np.array(manager.game.grid), max_search_depth=max_depth,
+                                       num_rollouts=num_rollouts, epsilon=epsilon, UCT=UCT)
 
             while condition:
                 if manager.game.lost:
@@ -99,8 +100,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 elif AI_type == "heuristic":
                     event = AI.heuristic_move_event(np.array(manager.game.grid), kwargs["type"])
                 elif AI_type == "rollout":
-                    event = AI.rollouts(np.array(manager.game.grid), manager.game.score, kwargs["type"], max_depth,
-                                        num_rollouts, epsilon)
+                    event = AI.rollouts(np.array(manager.game.grid), manager.game.score, kwargs["type"],
+                                        max_search_depth=max_depth, num_rollouts=num_rollouts, epsilon=epsilon)
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
                 else:
