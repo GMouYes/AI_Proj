@@ -130,7 +130,7 @@ def main():
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=20, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
-    MCTS_parser.add_argument("num_games", nargs='?', default=10)
+    MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
