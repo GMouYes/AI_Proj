@@ -25,9 +25,9 @@ normally, with full human control. Valid types are:
         * `-h|--help`: Displays command help
         * `num_games`: The number of games for the AI to play. The default is 10.
     * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
-    `... heuristic [-h|--help] [-t|--type {greedy,safe,safest,monotonic,smooth}] [num_games]`:
+    `... heuristic [-h|--help] [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}] [num_games]`:
         * `-h|--help`: Displays command help
-        * `-t|--type {greedy,safe,safest,monotonic,smooth}`: The type of heuristic to use.
+        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}`: The type of heuristic to use.
             * `greedy` makes any merge it can.
             * `safe` tries to play a bit smarter, moving the highest tile in the bottom right and keeping it there,
             if possible.
@@ -37,6 +37,19 @@ normally, with full human control. Valid types are:
             * `monotonic` prioritizes monotonicity. Tiles should be increasing across rows and down columns.
             * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each,
             since this can lead to merging opportunities.
+            * `corner_dist` penalizes high-valued tiles far from the bottom-right corner. The agent tries to minimize
+            the sum of (*tile_value* x *Manhattan_distance_from_bottom_right*).
             
             The default is type `safe`.
+        * `num_games`: The number of games for the AI to play. The default is 10.
+        
+    * `MCST`: Monte-Carlo Tree Search. Possible arguments are `... MCST [-h|--help] [-r|--num_rollouts] [-d|--max_depth]
+    [-e|--epsilon] [-U|--UCT] [num_games]`:
+        * `-h|--help`: Displays command help
+        * `-r|--num_rollouts`: The number of simulations to run per move. Default is 500 (currently).
+        * `-d|--max_depth`: The maximum number of moves to run per simulation. Default is 20.
+        * `-e|--epsilon`: The exploration rate; the chance of making a random move during a simulation instead of the
+        known best. Default is 0.1.
+        * `[-U|--UCT]`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
+        Default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.

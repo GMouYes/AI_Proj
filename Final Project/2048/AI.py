@@ -4,14 +4,13 @@ from typing import Callable, Union
 
 import numpy as np
 import pygame
-from game import Game2048
 
 _MOVES = ["Up", "Down", "Left", "Right"]
 
 _KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
 _REVERSE_KEYMAP = {v: k for k, v in _KEYMAP.items()}
 
-HEURISTICS = ["greedy", "safe", "safest", "monotonic", "smooth"]
+HEURISTICS = ["greedy", "safe", "safest", "monotonic", "smooth", "corner_dist"]
 
 
 class _Node(object):
@@ -28,6 +27,7 @@ class StateNode(_Node):
     def __init__(self, state: np.ndarray, parent=None):
         self.state = state
         self.moves = {}  # Maps hashes of moves ("Up", "Down",...) to MoveNodes
+        self.unvisited = valid_moves(state)
         super(StateNode, self).__init__(parent=parent)
 
     def __hash__(self):
@@ -36,7 +36,19 @@ class StateNode(_Node):
     def add_move(self, move):
         if hash(move) not in self.moves:
             new_move = MoveNode(move, self)
+            new_move.depth = self.depth
             self.moves.update({new_move.__hash__(): new_move})
+
+    def select_next_move(self, max_score):
+        moves = []
+        UCT = []
+        for _, v in self.moves.items():
+            moves.append(v.move)
+            score = v.avg_score / max_score + (2 * np.log(self.num_visits + 1) / self.num_visits) ** 0.5
+            UCT.append(score)
+
+        UCT = np.array(UCT)
+        return moves[np.random.choice(np.flatnonzero(UCT == UCT.max()))]
 
     def get_best_move(self):
         moves = []
@@ -66,13 +78,15 @@ class MoveNode(_Node):
 
 
 class GameTree(object):
-    def __init__(self, grid: np.ndarray, max_search_depth=20, num_rollouts=500, epsilon=0.1):
+    def __init__(self, grid: np.ndarray, max_search_depth=10, num_rollouts=100, epsilon=0.1, UCT=False):
         self.root = StateNode(np.copy(grid))
         self.cur_node = self.root
         self.max_search_depth = max_search_depth
         self.num_rollouts = num_rollouts
         self.epsilon = epsilon
+        self.UCT = UCT
         self.last_move = None
+        self.max_score = 0
         super(GameTree, self).__init__()
 
     def MCTS(self, cur_grid: np.ndarray, cur_score):
@@ -80,7 +94,7 @@ class GameTree(object):
         if self.last_move is not None:
             # If this isn't our first search, update our current position in the tree (else we start at the root)
             self.cur_node.moves[hash(self.last_move)].add_state(cur_grid)
-            self.cur_node = self.cur_node.moves[hash(self.last_move)][hash(str(cur_grid.tolist()))]
+            self.cur_node = self.cur_node.moves[hash(self.last_move)].states[hash(str(cur_grid.tolist()))]
             self.cur_node.visit_score = cur_score
 
         search_node = self.cur_node
@@ -89,23 +103,36 @@ class GameTree(object):
                 if len(valid_moves(search_node.state)) == 0:
                     break
                 # Choose a move
-                if random.random() < self.epsilon:
-                    move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                if len(search_node.unvisited) > 0:
+                    ind = random.choice(range(len(search_node.unvisited)))
+                    move = search_node.unvisited[ind]
+                    del search_node.unvisited[ind]
+
                 else:
-                    moves = set()
-                    for h_type in HEURISTICS:
-                        moves.add(_REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
-                    move = random.choice(moves)
+                    if self.UCT:
+                        move = search_node.select_next_move(self.max_score)
+                    else:
+                        if random.random() < self.epsilon:
+                            move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                        else:
+                            if len(search_node.moves) == 0:
+                                moves = []
+                                for h_type in HEURISTICS:
+                                    moves.append(_REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
+                                move = random.choice(moves)
+                            else:
+                                move = search_node.get_best_move()
 
                 # Add move to children if not present
                 search_node.add_move(move)
                 move_node = search_node.moves[hash(move)]
 
                 # Simulate move
-                new_state, new_score = simulate_move(self.cur_node.state, move, self.cur_node.visit_score)
+                new_state, new_score = simulate_move(search_node.state, move, search_node.visit_score)
                 move_node.add_state(new_state)
-                search_node = move_node.states[hash(str(new_state.to_list()))]
+                search_node = move_node.states[hash(str(new_state.tolist()))]
                 search_node.visit_score = new_score
+                self.max_score = max(self.max_score, new_score)
 
             # All moves simulated; do backup
             while search_node != self.cur_node:
@@ -113,9 +140,11 @@ class GameTree(object):
                     search_node.num_visits + 1)
                 search_node.num_visits += 1
                 parent_move = search_node.parent
+                parent_move.visit_score = search_node.visit_score
                 parent_move.avg_score = search_node.avg_score
                 parent_move.num_visits += 1
                 search_node = parent_move.parent
+                search_node.visit_score = parent_move.visit_score
 
             # Update the node for the current state (for sake of completeness)
             search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
@@ -223,13 +252,19 @@ def quick_merge(grid: np.ndarray, direction: str, cur_score=None):
     merged = grid.copy()
     if direction in ["Up", "Down"]:
         for c in range(grid.shape[1]):
-            merged[:, c] = quick_merge_row(grid[:, c], direction == "Down", cur_score)
+            if cur_score is None:
+                merged[:, c] = quick_merge_row(grid[:, c], direction == "Down", cur_score)
+            else:
+                merged[:, c], cur_score = quick_merge_row(grid[:, c], direction == "Down", cur_score)
 
     else:
         for r in range(grid.shape[0]):
-            merged[r, :] = quick_merge_row(grid[r, :], direction == "Right", cur_score)
+            if cur_score is None:
+                merged[r, :] = quick_merge_row(grid[r, :], direction == "Right", cur_score)
+            else:
+                merged[r, :], cur_score = quick_merge_row(grid[r, :], direction == "Right", cur_score)
 
-    return merged
+    return merged if cur_score is None else (merged, cur_score)
 
 
 def simulate_move(grid: np.ndarray, direction: str, cur_score):
@@ -294,6 +329,11 @@ def monotonicity(grid: np.ndarray):
     return np.sum((grid < np.roll(grid, 1, axis=0))[1:, :]) + np.sum((grid < np.roll(grid, 1, axis=1))[:, 1:])
 
 
+def dist_from_corner(grid: np.ndarray):
+    r, c = grid.nonzero()
+    return ((grid.shape[0] - 1 - r + grid.shape[1] - 1 - c) * grid[r, c]).sum()
+
+
 def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
     if heuristic_type in ["greedy", "safe", "safest"]:
         moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
@@ -341,6 +381,11 @@ def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
         valid = valid_moves(grid)
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, monotonicity)]})
 
-    else:  # Smooth
+    elif heuristic_type == "smooth":  # Smooth
         valid = valid_moves(grid)
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, smoothness)]})
+
+    else:  # Corner distance
+        grid = np.array(grid)
+        valid = valid_moves(grid)
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, dist_from_corner)]})

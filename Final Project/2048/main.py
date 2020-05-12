@@ -66,6 +66,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
     else:
         try:
             pygame.event.set_blocked([pygame.KEYDOWN, pygame.MOUSEBUTTONUP])
+            manager.new_game(**kwargs)
             game_scores = []
             condition = True
             tree = None
@@ -74,9 +75,10 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 num_rollouts = kwargs["num_rollouts"]
                 max_depth = kwargs["max_depth"]
                 epsilon = kwargs["epsilon"]
+                UCT = kwargs["UCT"]
                 if epsilon < 0 or epsilon > 1:
                     raise ValueError("Epsilon must be in the interval [0, 1].")
-                tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon)
+                tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon, UCT)
 
             while condition:
                 if manager.game.lost:
@@ -89,7 +91,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 elif AI_type == "random":
                     event = AI.random_move_event(np.array(manager.game.grid))
                 elif AI_type == "heuristic":
-                    event = AI.heuristic_move_event(manager.game.grid, kwargs["type"])
+                    event = AI.heuristic_move_event(np.array(manager.game.grid), kwargs["type"])
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
                 else:
@@ -119,13 +121,16 @@ def main():
 
     heuristic_parser = subparsers.add_parser("heuristic")
     heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
-                                                                      "smooth"], default="safe", type=str)
+                                                                      "smooth", "corner_dist"],
+                                  default="safe", type=str)
     heuristic_parser.add_argument("num_games", nargs='?', default=10)
 
     MCTS_parser = subparsers.add_parser("MCTS")
     MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=20, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
+    MCTS_parser.add_argument('-U', "--UCT", action='store_false')
+    MCTS_parser.add_argument("num_games", nargs='?', default=10)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
