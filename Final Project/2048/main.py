@@ -5,6 +5,7 @@ import statistics as stats
 
 import errno
 import pygame
+import numpy as np
 from appdirs import user_data_dir
 
 from game import Game2048
@@ -42,8 +43,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
         state_file_prefix += '_' + AI_type
 
     if AI_type == "heuristic":
-        score_file_prefix += str(kwargs["type"])
-        state_file_prefix += str(kwargs["type"])
+        score_file_prefix += '_' + str(kwargs["type"])
+        state_file_prefix += '_' + str(kwargs["type"])
 
     screen = pygame.display.set_mode((game_class.WIDTH, game_class.HEIGHT))
     manager = GameManager(Game2048, screen,
@@ -67,19 +68,30 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             pygame.event.set_blocked([pygame.KEYDOWN, pygame.MOUSEBUTTONUP])
             game_scores = []
             condition = True
+            tree = None
+
+            if AI_type == "MCTS":
+                num_rollouts = kwargs["num_rollouts"]
+                max_depth = kwargs["max_depth"]
+                epsilon = kwargs["epsilon"]
+                if epsilon < 0 or epsilon > 1:
+                    raise ValueError("Epsilon must be in the interval [0, 1].")
+                tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon)
 
             while condition:
                 if manager.game.lost:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.lost_try_again_pos})
                     game_scores.append(manager.game.score)
-                    if AI_type in ["random", "heuristic"]:
+                    if AI_type in ["random", "heuristic", "MCTS"]:
                         condition = kwargs["num_games"] > len(game_scores)
                 elif manager.game.won == 1:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.keep_going_pos})
                 elif AI_type == "random":
-                    event = AI.random_move_event(manager.game)
+                    event = AI.random_move_event(manager.game.grid)
                 elif AI_type == "heuristic":
-                    event = AI.heuristic_move_event(manager.game, kwargs["type"])
+                    event = AI.heuristic_move_event(manager.game.grid, kwargs["type"])
+                elif AI_type == "MCTS":
+                    event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
                 else:
                     raise ValueError("AI mode selected but invalid AI type was supplied!")
                 manager.dispatch(event)
@@ -109,6 +121,12 @@ def main():
     heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
                                                                       "smooth"], default="safe", type=str)
     heuristic_parser.add_argument("num_games", nargs='?', default=10)
+
+    MCTS_parser = subparsers.add_parser("MCTS")
+    MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
+    MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=20, type=int)
+    MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
+
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
     run_game(**kwargs)

@@ -9,44 +9,122 @@ from game import Game2048
 _MOVES = ["Up", "Down", "Left", "Right"]
 
 _KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
+_REVERSE_KEYMAP = {v: k for k, v in _KEYMAP.items()}
+
+HEURISTICS = ["greedy", "safe", "safest", "monotonic", "smooth"]
 
 
 class _Node(object):
-    def __init__(self):
+    def __init__(self, parent=None):
         self.depth = 0
         self.num_visits = 0
+        self.visit_score = 0
         self.avg_score = 0
-        self.parent = None
+        self.parent = parent
         super(_Node, self).__init__()
 
 
 class StateNode(_Node):
-    def __init__(self, state: np.ndarray):
+    def __init__(self, state: np.ndarray, parent=None):
         self.state = state
-        self.moves = {}  # Maps strings ("Up", "Down",...) to MoveNodes
-        super(StateNode, self).__init__()
+        self.moves = {}  # Maps hashes of moves ("Up", "Down",...) to MoveNodes
+        super(StateNode, self).__init__(parent=parent)
 
     def __hash__(self):
-        return str(self.state.tolist())
+        return str(self.state.tolist()).__hash__()
+
+    def add_move(self, move):
+        if hash(move) not in self.moves:
+            new_move = MoveNode(move, self)
+            self.moves.update({new_move.__hash__(): new_move})
+
+    def get_best_move(self):
+        moves = []
+        scores = []
+        for _, v in self.moves.items():
+            moves.append(v.move)
+            scores.append(v.avg_score)
+
+        scores = np.array(scores)
+        return moves[np.random.choice(np.flatnonzero(scores == scores.max()))]
 
 
 class MoveNode(_Node):
-    def __init__(self, move: str):
+    def __init__(self, move: str, parent=None):
         self.move = move
-        self.states = {}  # Maps string representations of states to StateNodes
-        super(MoveNode, self).__init__()
+        self.states = {}  # Maps StateNode hashes to StateNodes
+        super(MoveNode, self).__init__(parent=parent)
 
     def __hash__(self):
-        return self.move
+        return self.move.__hash__()
+
+    def add_state(self, state: np.ndarray):
+        if hash(str(state.tolist())) not in self.states:
+            new_state = StateNode(state, self)
+            new_state.depth = self.depth + 1
+            self.states.update({new_state.__hash__(): new_state})
 
 
 class GameTree(object):
     def __init__(self, grid: np.ndarray, max_search_depth=20, num_rollouts=500, epsilon=0.1):
         self.root = StateNode(np.copy(grid))
         self.cur_node = self.root
+        self.max_search_depth = max_search_depth
+        self.num_rollouts = num_rollouts
+        self.epsilon = epsilon
+        self.last_move = None
         super(GameTree, self).__init__()
 
-        # TODO: Add function for MCTS, e.g. MCTS() -> move
+    def MCTS(self, cur_grid: np.ndarray, cur_score):
+
+        if self.last_move is not None:
+            # If this isn't our first search, update our current position in the tree (else we start at the root)
+            self.cur_node.moves[hash(self.last_move)].add_state(cur_grid)
+            self.cur_node = self.cur_node.moves[hash(self.last_move)][hash(str(cur_grid.tolist()))]
+            self.cur_node.visit_score = cur_score
+
+        search_node = self.cur_node
+        for _ in range(self.num_rollouts):
+            for _ in range(self.max_search_depth):
+                if len(valid_moves(search_node.state)) == 0:
+                    break
+                # Choose a move
+                if random.random() < self.epsilon:
+                    move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                else:
+                    moves = set()
+                    for h_type in HEURISTICS:
+                        moves.add(_REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
+                    move = random.choice(moves)
+
+                # Add move to children if not present
+                search_node.add_move(move)
+                move_node = search_node.moves[hash(move)]
+
+                # Simulate move
+                new_state, new_score = simulate_move(self.cur_node.state, move, self.cur_node.visit_score)
+                move_node.add_state(new_state)
+                search_node = move_node.states[hash(str(new_state.to_list()))]
+                search_node.visit_score = new_score
+
+            # All moves simulated; do backup
+            while search_node != self.cur_node:
+                search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
+                    search_node.num_visits + 1)
+                search_node.num_visits += 1
+                parent_move = search_node.parent
+                parent_move.avg_score = search_node.avg_score
+                parent_move.num_visits += 1
+                search_node = parent_move.parent
+
+            # Update the node for the current state (for sake of completeness)
+            search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
+                    search_node.num_visits + 1)
+            search_node.num_visits += 1
+
+        # Choose best move
+        self.last_move = self.cur_node.get_best_move()
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[self.last_move]})
 
 
 def _get_merge_directions(grid: np.ndarray):
@@ -105,12 +183,11 @@ def _heuristic_choose_direction(moves: list, heuristic_type="greedy"):
             return random.choice(moves)
 
 
-def random_move_event(game: Game2048):
-    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(
-        game.grid)])})
+def random_move_event(grid: np.ndarray):
+    return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(grid)])})
 
 
-def quick_merge_row(row, right=True):
+def quick_merge_row(row, right=True, old_score=None):
     """
     Quick merge for a single row, courtesy of
     https://stackoverflow.com/questions/22970210/most-efficient-way-to-shift-and-merge-the-elements-of-a-list-in-python-2048
@@ -119,7 +196,8 @@ def quick_merge_row(row, right=True):
 
     :param row: Row of the game grid to merge
     :param right: Whether to merge to the right or to the left (right by default)
-    :return: The merged row
+    :param old_score: The current game score if a new score should be calculated; None otherwise
+    :return: The merged row if old_score is None; else a tuple of (merged_row, new_score)
     """
     if right:
         row = row[::-1]
@@ -128,6 +206,8 @@ def quick_merge_row(row, right=True):
     for n in row:
         if values and n == values[-1]:
             values[-1] = 2 * n
+            if old_score is not None:
+                old_score += 2 * n
             empty += 1
         elif n:
             values.append(n)
@@ -136,32 +216,31 @@ def quick_merge_row(row, right=True):
     values += [0] * empty
     if right:
         values = values[::-1]
-    return values
+    return values if old_score is None else (values, old_score)
 
 
-def quick_merge(grid: np.ndarray, direction: str):
+def quick_merge(grid: np.ndarray, direction: str, cur_score=None):
     merged = grid.copy()
     if direction in ["Up", "Down"]:
         for c in range(grid.shape[1]):
-            merged[:, c] = quick_merge_row(grid[:, c], direction == "Down")
+            merged[:, c] = quick_merge_row(grid[:, c], direction == "Down", cur_score)
 
     else:
         for r in range(grid.shape[0]):
-            merged[r, :] = quick_merge_row(grid[r, :], direction == "Right")
+            merged[r, :] = quick_merge_row(grid[r, :], direction == "Right", cur_score)
 
     return merged
 
 
-def simulate_move(grid: np.ndarray, direction: str):
-    grid = quick_merge(grid, direction)
+def simulate_move(grid: np.ndarray, direction: str, cur_score):
+    grid, new_score = quick_merge(grid, direction, cur_score)
     r, c = np.where(grid == 0)
     i = random.choice(range(len(r)))
     grid[r[i], c[i]] = 2 if random.random() < 0.9 else 4
-    return grid
+    return grid, new_score
 
 
 def is_valid_move(grid: np.ndarray, direction: str):
-    test = simulate_move(grid, direction)
     return ~np.all(grid == quick_merge(grid, direction))
 
 
@@ -207,18 +286,15 @@ def move_diff(cur_grid: np.ndarray, new_grid: np.ndarray):
 
 
 def smoothness(grid: np.ndarray):
-    return np.abs(grid - np.pad(grid, ((1, 0), (0, 0)))[:-1, 0]) + \
-           np.abs(grid - np.pad(grid, ((0, 1), (0, 0)))[1:, 0]) + \
-           np.abs(grid - np.pad(grid, ((0, 0), (1, 0)))[0, :-1]) + \
-           np.abs(grid - np.pad(grid, ((0, 0), (0, 1)))[0, 1:])
+    return np.abs(grid[:-1, :] - grid[1:, :]).sum() + np.abs(grid[1:, :] - grid[:-1, :]).sum() + np.abs(
+        grid[:, :-1] - grid[:, 1:]).sum() + np.abs(grid[:, 1:] - grid[:, :-1]).sum()
 
 
 def monotonicity(grid: np.ndarray):
     return np.sum((grid < np.roll(grid, 1, axis=0))[1:, :]) + np.sum((grid < np.roll(grid, 1, axis=1))[:, 1:])
 
 
-def heuristic_move_event(game: Game2048, heuristic_type="greedy"):
-    grid = np.array(game.grid)
+def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
     if heuristic_type in ["greedy", "safe", "safest"]:
         moves = [_heuristic_choose_direction(move, heuristic_type) for move in _get_merge_directions(grid)]
         moves = np.array(moves)
