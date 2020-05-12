@@ -117,17 +117,17 @@ def main():
     subparsers = parser.add_subparsers(dest='AI_type')
 
     random_parser = subparsers.add_parser("random")
-    random_parser.add_argument("num_games", nargs='?', default=10)
+    random_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     heuristic_parser = subparsers.add_parser("heuristic")
     heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
                                                                       "smooth", "corner_dist"],
                                   default="safe", type=str)
-    heuristic_parser.add_argument("num_games", nargs='?', default=10)
+    heuristic_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     MCTS_parser = subparsers.add_parser("MCTS")
-    MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
-    MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=20, type=int)
+    MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=100, type=int)
+    MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
     MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)

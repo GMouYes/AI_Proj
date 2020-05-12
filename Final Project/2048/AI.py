@@ -116,12 +116,13 @@ class GameTree(object):
                             move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
                         else:
                             # if len(search_node.moves) == 0:
-                                moves = []
-                                for h_type in ["monotonic"]:
-                                    moves.append(_REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
-                                move = random.choice(moves)
-                            # else:
-                            #     move = search_node.get_best_move()
+                            moves = []
+                            for h_type in ["safest", "corner_dist"]:
+                                moves.append(
+                                    _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
+                            move = random.choice(moves)
+                        # else:
+                        #     move = search_node.get_best_move()
 
                 # Add move to children if not present
                 search_node.add_move(move)
@@ -137,7 +138,7 @@ class GameTree(object):
             # All moves simulated; do backup
             while search_node != self.cur_node:
                 search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
-                    search_node.num_visits + 1)
+                        search_node.num_visits + 1)
                 search_node.num_visits += 1
                 parent_move = search_node.parent
                 parent_move.visit_score = search_node.visit_score
@@ -154,6 +155,13 @@ class GameTree(object):
         # Choose best move
         self.last_move = self.cur_node.get_best_move()
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[self.last_move]})
+
+
+def rollouts(grid: np.ndarray, heuristic_type=None, max_search_depth=10, num_rollouts=100, epsilon=0.1):
+    for _ in range(num_rollouts):
+        for _ in range(max_search_depth):
+
+            pass
 
 
 def _get_merge_directions(grid: np.ndarray):
@@ -375,7 +383,8 @@ def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
                 return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, move_diff)]})
 
         else:
-            return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(grid)])})
+            return pygame.event.Event(pygame.KEYDOWN,
+                                      {"key": random.choice([_KEYMAP[move] for move in valid_moves(grid)])})
 
     elif heuristic_type == "monotonic":
         valid = valid_moves(grid)
