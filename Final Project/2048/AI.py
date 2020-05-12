@@ -157,11 +157,31 @@ class GameTree(object):
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[self.last_move]})
 
 
-def rollouts(grid: np.ndarray, heuristic_type=None, max_search_depth=10, num_rollouts=100, epsilon=0.1):
-    for _ in range(num_rollouts):
-        for _ in range(max_search_depth):
+def rollouts(grid: np.ndarray, score, heuristic_type=None, max_search_depth=10, num_rollouts=100, epsilon=0.1):
+    moves = valid_moves(grid)
+    move_visits = [0] * len(moves)
+    move_scores = [0] * len(moves)
+    for move in range(len(moves)):
+        new_grid, new_score = simulate_move(grid, moves[move], score)
+        avg_score = 0
+        if len(valid_moves(new_grid)) == 0:
+            continue
+        for _ in range(num_rollouts):
+            for _ in range(max_search_depth):
+                if len(valid_moves(new_grid)) == 0:
+                    break
+                if random.random() < epsilon or heuristic_type is None:
+                    new_move = _REVERSE_KEYMAP[random_move_event(new_grid).dict["key"]]
+                else:
+                    new_move = _REVERSE_KEYMAP[heuristic_move_event(new_grid, heuristic_type).dict["key"]]
 
-            pass
+                new_grid, new_score = simulate_move(new_grid, new_move, new_score)
+            avg_score = avg_score + (new_score - avg_score) / (move_visits[move] + 1)
+            move_visits[move] += 1
+        move_scores[move] = avg_score
+    move_scores = np.array(move_scores)
+    return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[moves[np.random.choice(
+        np.flatnonzero(move_scores == move_scores.max()))]]})
 
 
 def _get_merge_directions(grid: np.ndarray):
@@ -278,8 +298,9 @@ def quick_merge(grid: np.ndarray, direction: str, cur_score=None):
 def simulate_move(grid: np.ndarray, direction: str, cur_score):
     grid, new_score = quick_merge(grid, direction, cur_score)
     r, c = np.where(grid == 0)
-    i = random.choice(range(len(r)))
-    grid[r[i], c[i]] = 2 if random.random() < 0.9 else 4
+    if len(r) > 0 and len(c) > 0:
+        i = random.choice(range(len(r)))
+        grid[r[i], c[i]] = 2 if random.random() < 0.9 else 4
     return grid, new_score
 
 

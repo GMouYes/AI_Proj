@@ -71,14 +71,15 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             condition = True
             tree = None
 
-            if AI_type == "MCTS":
+            if AI_type in ["rollout", "MCTS"]:
                 num_rollouts = kwargs["num_rollouts"]
                 max_depth = kwargs["max_depth"]
                 epsilon = kwargs["epsilon"]
-                UCT = kwargs["UCT"]
                 if epsilon < 0 or epsilon > 1:
                     raise ValueError("Epsilon must be in the interval [0, 1].")
-                tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon, UCT)
+                if AI_type == "MCTS":
+                    UCT = kwargs["UCT"]
+                    tree = AI.GameTree(np.array(manager.game.grid), num_rollouts, max_depth, epsilon, UCT)
 
             while condition:
                 if manager.game.lost:
@@ -92,6 +93,9 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                     event = AI.random_move_event(np.array(manager.game.grid))
                 elif AI_type == "heuristic":
                     event = AI.heuristic_move_event(np.array(manager.game.grid), kwargs["type"])
+                elif AI_type == "rollout":
+                    event = AI.rollouts(np.array(manager.game.grid), manager.game.score, kwargs["type"], max_depth,
+                                        num_rollouts, epsilon)
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
                 else:
@@ -131,6 +135,14 @@ def main():
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
     MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
+
+    rollout_parser = subparsers.add_parser("rollout")
+    rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
+    rollout_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
+    rollout_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
+    rollout_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
+                                                                    "smooth", "corner_dist"], default=None, type=str)
+    rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 

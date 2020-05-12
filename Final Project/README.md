@@ -43,13 +43,26 @@ normally, with full human control. Valid types are:
             The default is type `safe`.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
-    * `MCST`: Monte-Carlo Tree Search. Possible arguments are `... MCST [-h|--help] [-r|--num_rollouts] [-d|--max_depth]
-    [-e|--epsilon] [-U|--UCT] [num_games]`:
+    * `MCST`: Monte-Carlo Tree Search. Possible arguments are `... MCST [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
+    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-U|--UCT] [num_games]`:
         * `-h|--help`: Displays command help
-        * `-r|--num_rollouts`: The number of simulations to run per move. Default is 500 (currently).
-        * `-d|--max_depth`: The maximum number of moves to run per simulation. Default is 20.
-        * `-e|--epsilon`: The exploration rate; the chance of making a random move during a simulation instead of the
-        known best. Default is 0.1.
+        * `-r|--num_rollouts [NUM_ROLLOUTS]`: The number of simulations to run per move. Default is 100.
+        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of moves to run per simulation. Default is 4.
+        * `-e|--epsilon [EPSILON]`: The exploration rate; the chance of making a random move during a simulation instead
+        of the known best. Default is 0.1.
         * `[-U|--UCT]`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
         Default is False.
+        * `num_games`: The number of games for the AI to play. The default is 10.
+        
+    * `rollout`: Instead of building a game tree, use rollouts to predict how well possible moves will do, with
+    preference potentially governed by a heuristic. Possible arguments are `... rollout [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
+    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}] [num_games]`:
+        * `-h|--help`: Displays command help
+        * `-r|--num_rollouts [NUM_ROLLOUTS]`: The number of simulations to run per move. Default is 500.
+        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of moves to run per simulation. Default is 4.
+        * `-e|--epsilon [EPSILON]`: The exploration rate; the chance of making a random move during a simulation instead
+        of the known best. Default is 0.1.
+        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}`: The heuristic to use during rollouts when
+        "exploiting" knowledge of the game. All options are the same as `heuristic` above. If no type is supplied, the
+        agent chooses randomly.
         * `num_games`: The number of games for the AI to play. The default is 10.
