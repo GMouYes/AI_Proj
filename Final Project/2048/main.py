@@ -87,7 +87,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 elif manager.game.won == 1:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.keep_going_pos})
                 elif AI_type == "random":
-                    event = AI.random_move_event(manager.game.grid)
+                    event = AI.random_move_event(np.array(manager.game.grid))
                 elif AI_type == "heuristic":
                     event = AI.heuristic_move_event(manager.game.grid, kwargs["type"])
                 elif AI_type == "MCTS":
