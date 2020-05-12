@@ -17,7 +17,7 @@ Both are available in the PyPI and can be installed using `pip`.
 
 Currently, the script can be run as follows, with optional arguments in brackets:
 
-`python __main__.py [-h|--help] [--AI_type] {random,heuristic} ...`, where
+`python __main__.py [-h|--help] [--AI_type] {random,heuristic, MCTS, rollout} ...`, where
 * `-h|--help`: Displays command help
 * `--AI_type`: If supplied, a valid AI type and the associated parameters must be supplied; else, the game starts
 normally, with full human control. Valid types are:
