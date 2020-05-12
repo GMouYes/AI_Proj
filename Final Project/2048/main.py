@@ -11,6 +11,7 @@ from appdirs import user_data_dir
 from game import Game2048
 from manager import GameManager
 import AI
+import time
 
 
 def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwargs):
@@ -110,6 +111,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             pygame.quit()
             manager.close()
             print("Number of games played:", len(game_scores))
+            print(game_scores)
             print("Max Score:", max(game_scores))
             print("Average Score:", stats.mean(game_scores))
 
@@ -149,5 +151,8 @@ def main():
     rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
-
+    
+    start_time = time.time()
     run_game(**kwargs)
+    end_time = time.time()
+    print("total seconds for the simulation:", int(end_time-start_time))
