@@ -42,9 +42,13 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
         score_file_prefix += '_' + AI_type
         state_file_prefix += '_' + AI_type
 
-    if AI_type == "heuristic":
-        score_file_prefix += '_' + str(kwargs["type"])
-        state_file_prefix += '_' + str(kwargs["type"])
+    if AI_type in ["heuristic", "rollout"]:
+        if AI_type == "rollout" and kwargs["type"] is None or kwargs["type"] == 'None':
+            type_str = "random"
+        else:
+            type_str = kwargs["type"]
+        score_file_prefix += '_' + type_str
+        state_file_prefix += '_' + type_str
 
     screen = pygame.display.set_mode((game_class.WIDTH, game_class.HEIGHT))
     manager = GameManager(Game2048, screen,
