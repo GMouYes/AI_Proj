@@ -73,6 +73,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             pygame.event.set_blocked([pygame.KEYDOWN, pygame.MOUSEBUTTONUP])
             manager.new_game(**kwargs)
             game_scores = []
+            best_tiles = []
             condition = True
             tree = None
 
@@ -91,6 +92,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 if manager.game.lost:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.lost_try_again_pos})
                     game_scores.append(manager.game.score)
+                    best_tiles.append(np.max(manager.game.grid))
                     if AI_type in ["random", "heuristic", "MCTS", "rollout"]:
                         condition = kwargs["num_games"] > len(game_scores)
                 elif manager.game.won == 1:
@@ -112,13 +114,27 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             pygame.quit()
             manager.close()
             print("Number of games played:", len(game_scores))
+            print("Game Scores:")
             print(game_scores)
+            print("Best Tiles:")
+            print(best_tiles)
             print("Max Score:", max(game_scores))
+            print("Max Tile:", max(best_tiles))
             print("Average Score:", stats.mean(game_scores))
 
         finally:
             pygame.quit()
             manager.close()
+
+        if "simulate" in kwargs:
+            results = {
+                "game_scores": game_scores,
+                "best_tiles": best_tiles,
+                "max_score": max(game_scores),
+                "max_tile": max(best_tiles),
+                "avg_score": stats.mean(game_scores)
+            }
+            return results
 
 
 def main():
@@ -131,25 +147,25 @@ def main():
     random_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     heuristic_parser = subparsers.add_parser("heuristic")
-    heuristic_parser.add_argument("num_games", nargs='?', default=10, type=int)
     heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
                                                                       "smooth", "corner_dist"],
                                   default="safe", type=str)
+    heuristic_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     MCTS_parser = subparsers.add_parser("MCTS")
-    MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
     MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=100, type=int)
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
+    MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     rollout_parser = subparsers.add_parser("rollout")
-    rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
     rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
     rollout_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     rollout_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
     rollout_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
                                                                     "smooth", "corner_dist"], default=None, type=str)
+    rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
     
@@ -157,3 +173,4 @@ def main():
     run_game(**kwargs)
     end_time = time.time()
     print("total seconds for the simulation:", int(end_time-start_time))
+
