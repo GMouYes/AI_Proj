@@ -49,8 +49,8 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         "corner_dist": "c_d",
         "random": "rnd",
         "rollout": "roll",
-        True: 'T',
-        False: 'F',
+        'True': 'T',
+        'False': 'F',
         'None': 'rnd'
     }
 
@@ -81,7 +81,7 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         sheet_name = ''
         for opt in opts:
             sheet_name += SHORT_NAMES[opt] + \
-                          (str(SHORT_NAMES[opts[opt]]) if opts[opt] in SHORT_NAMES else str(opts[opt])) + ','
+                          (SHORT_NAMES[opts[opt]] if str(opts[opt]) in SHORT_NAMES else str(opts[opt])) + ','
         sheet_name = sheet_name[:-1]
         _write_to_excel(df, outfile, sheet_name)
 
