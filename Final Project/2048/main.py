@@ -111,8 +111,6 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 manager.dispatch(event)
                 manager.draw()
 
-            pygame.quit()
-            manager.close()
             print("Number of games played:", len(game_scores))
             print("Game Scores:")
             print(game_scores)
@@ -123,8 +121,9 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             print("Average Score:", stats.mean(game_scores))
 
         finally:
-            pygame.quit()
-            manager.close()
+            if "simulate" not in kwargs:
+                pygame.quit()
+                manager.close()
 
         if "simulate" in kwargs:
             results = {

@@ -48,7 +48,7 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         "smooth": "smth",
         "corner_dist": "c_d",
         "random": "rnd",
-        "rollout": "roll",
+        "rollout": "rollou",
         True: 'T',
         False: 'F',
         'None': 'rnd'
@@ -62,7 +62,7 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
     if AI_type in ["rollout", "MCTS"]:
         params["max_depth"] = [1, 2, 3, 4, 5, 10, 20]
         params["num_rollouts"] = [25, 50, 100, 500, 1000]
-        params["epsilon"] = [0.1, 0.2, 0.3, 0.4]
+        params["epsilon"] = [0, 0.1, 0.2, 0.3, 0.4]
         params["type"] = ['None', *HEURISTICS]
         if AI_type == "MCTS":
             params["UCT"] = [True, False]
@@ -87,4 +87,4 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
 
 
 if __name__ == "__main__":
-    simulate("rollout")
+    simulate("heuristic", num_iterations=1)
