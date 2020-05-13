@@ -44,8 +44,8 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
     }
 
     params = {
-        "num_games": [num_iterations],
-        "AI_type": [AI_type]
+        "AI_type": [AI_type],
+        "num_games": [num_iterations]
     }
 
     if AI_type in ["rollout", "MCTS"]:
