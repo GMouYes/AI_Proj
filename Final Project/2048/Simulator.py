@@ -48,7 +48,7 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         "smooth": "smth",
         "corner_dist": "c_d",
         "random": "rnd",
-        "rollout": "rollou",
+        "rollout": "roll",
         True: 'T',
         False: 'F',
         'None': 'rnd'
@@ -87,4 +87,4 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
 
 
 if __name__ == "__main__":
-    simulate("heuristic", num_iterations=1)
+    simulate("rollout")
