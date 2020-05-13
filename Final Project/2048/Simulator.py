@@ -38,9 +38,20 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         "num_games": 'n=',
         "max_depth": 'd=',
         "num_rollouts": 'r=',
-        "epsilon": 'e-',
+        "epsilon": 'e=',
         "UCT": 'U=',
-        "type": 't='
+        "type": 't=',
+        "greedy": "grdy",
+        "safe": "sf",
+        "safest": "sfst",
+        "monotonic": "mn",
+        "smooth": "smth",
+        "corner_dist": "c_d",
+        "random": "rnd",
+        "rollout": "roll",
+        True: 'T',
+        False: 'F',
+        'None': 'rnd'
     }
 
     params = {
@@ -52,7 +63,7 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         params["max_depth"] = [1, 2, 3, 4, 5, 10, 20]
         params["num_rollouts"] = [25, 50, 100, 500, 1000]
         params["epsilon"] = [0.1, 0.2, 0.3, 0.4]
-        params["type"] = [None, *HEURISTICS]
+        params["type"] = ['None', *HEURISTICS]
         if AI_type == "MCTS":
             params["UCT"] = [True, False]
 
@@ -69,10 +80,11 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
         df = pd.DataFrame(results)
         sheet_name = ''
         for opt in opts:
-            sheet_name += SHORT_NAMES[opt] + str(opts[opt]) + ','
+            sheet_name += SHORT_NAMES[opt] + \
+                          (str(SHORT_NAMES[opts[opt]]) if opts[opt] in SHORT_NAMES else str(opts[opt])) + ','
         sheet_name = sheet_name[:-1]
         _write_to_excel(df, outfile, sheet_name)
 
 
 if __name__ == "__main__":
-    simulate()
+    simulate("rollout")
