@@ -10,8 +10,9 @@ class Expectimax:
 
     def expectimax(self, current_depth, state: np.ndarray, is_max_turn):
         if current_depth == self.max_depth or is_end(state, is_max_turn):
-            #             return evaluation function(utility)
-            pass
+            # return evaluation function(utility)
+            return heuristic(state)
+
         # ai's turn
         if is_max_turn:
             # get possible next action
@@ -126,3 +127,12 @@ def quick_merge_row(row, right=True, old_score=None):
 
 def is_end(state: np.ndarray, is_max_turn: bool):
     return len(valid_moves(state)) == 0 and is_max_turn
+
+
+def heuristic(grid: np.ndarray):
+    # calculated the empty space + heavy weights for largest values on the edge
+    # number of possible merge
+
+    build_list = [4 ** i for i in range(7)]
+    weighted_matrix = np.array([build_list[i:i + 4] for i in range(4)]).reshape(4, 4)
+    return np.sum(grid == 0) + np.sum(np.multiply(grid, weighted_matrix))
