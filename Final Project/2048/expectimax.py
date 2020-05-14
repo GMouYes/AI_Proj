@@ -1,6 +1,9 @@
 import numpy as np
+import pygame
 
 _MOVES = ["Up", "Down", "Left", "Right"]
+_KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
+
 
 
 class Expectimax:
@@ -11,7 +14,7 @@ class Expectimax:
     def expectimax(self, current_depth, state: np.ndarray, is_max_turn):
         if current_depth == self.max_depth or is_end(state, is_max_turn):
             # return evaluation function(utility)
-            return heuristic(state)
+            return heuristic(state), "Up"
 
         # ai's turn
         if is_max_turn:
@@ -27,7 +30,7 @@ class Expectimax:
                 # make the move
                 # next_state.move(move)
                 next_state = quick_merge(state, move)
-                child_utility = self.expectimax(current_depth + 1, next_state, not is_max_turn)
+                child_utility, _ = self.expectimax(current_depth + 1, next_state, not is_max_turn)
                 if child_utility > max_utility:
                     max_utility = child_utility
                     best_move = move
@@ -54,10 +57,11 @@ class Expectimax:
                 utility, _ = self.expectimax(current_depth + 1, next_state, not is_max_turn)
                 chance_utility += utility * tile[2]
 
-            return chance_utility
+            return chance_utility, None
 
     def get_best_move(self, state):
-        return self.expectimax(0, state, True)
+        best_move = self.expectimax(0, state, True)[1]
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[best_move]})
 
 
 # get_all_empty_cells

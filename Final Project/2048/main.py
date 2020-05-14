@@ -11,6 +11,7 @@ from appdirs import user_data_dir
 from game import Game2048
 from manager import GameManager
 import AI
+import expectimax
 import time
 
 
@@ -106,6 +107,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                                         max_search_depth=max_depth, num_rollouts=num_rollouts, epsilon=epsilon)
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
+                # elif AI_type == "expectimax":
+                #     event = expectimax.Expectimax(5).get_best_move(np.array(manager.game.grid))
                 else:
                     raise ValueError("AI mode selected but invalid AI type was supplied!")
                 manager.dispatch(event)
