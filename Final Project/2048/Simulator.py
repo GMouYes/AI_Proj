@@ -30,7 +30,7 @@ def _write_to_excel(results: pd.DataFrame, fname: str, sheet_name: str):
         results.to_excel(writer, sheet_name)
 
 
-def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx"):
+def simulate(AI_type="heuristic", num_iterations=30, outfile="simulation.xlsx", **kwargs):
 
     HEURISTICS = ["safest", "smooth", "monotonic"]
     SHORT_NAMES = {
@@ -70,11 +70,17 @@ def simulate(AI_type="heuristic", num_iterations=100, outfile="simulation.xlsx")
     elif AI_type == "heuristic":
         params["type"] = AI.HEURISTICS
 
+    if kwargs:
+        for k, v in kwargs.items():
+            params[k] = v
+
     vars = params.keys()
     vals = params.values()
 
     for val_combo in itertools.product(*vals):
         opts = dict(zip(vars, val_combo))
+        print("Current Configuration:")
+        print(opts)
         results = simulate_config(**opts)
         results.update(opts)
         df = pd.DataFrame(results)
