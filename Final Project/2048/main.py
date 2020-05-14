@@ -87,13 +87,15 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                 if AI_type == "MCTS":
                     UCT = kwargs["UCT"]
                     tree = AI.GameTree(np.array(manager.game.grid), max_search_depth=max_depth,
-                                       num_rollouts=num_rollouts, epsilon=epsilon, UCT=UCT)
+                                       num_rollouts=num_rollouts, epsilon=epsilon, UCT=UCT,
+                                       use_expert_score=kwargs["use_expert"])
 
             while condition:
                 if manager.game.lost:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.lost_try_again_pos})
                     game_scores.append(manager.game.score)
                     best_tiles.append(np.max(manager.game.grid))
+                    print(len(game_scores))
                     if AI_type in ["random", "heuristic", "MCTS", "rollout"]:
                         condition = kwargs["num_games"] > len(game_scores)
                 elif manager.game.won == 1:
@@ -104,7 +106,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                     event = AI.heuristic_move_event(np.array(manager.game.grid), kwargs["type"])
                 elif AI_type == "rollout":
                     event = AI.rollouts(np.array(manager.game.grid), manager.game.score, kwargs["type"],
-                                        max_search_depth=max_depth, num_rollouts=num_rollouts, epsilon=epsilon)
+                                        max_search_depth=max_depth, num_rollouts=num_rollouts, epsilon=epsilon,
+                                        use_expert_score=kwargs["use_expert"])
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
                 # elif AI_type == "expectimax":
@@ -150,23 +153,25 @@ def main():
 
     heuristic_parser = subparsers.add_parser("heuristic")
     heuristic_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
-                                                                      "smooth", "corner_dist"],
+                                                                      "smooth", "corner_dist", "expert"],
                                   default="safe", type=str)
     heuristic_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     MCTS_parser = subparsers.add_parser("MCTS")
     MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=100, type=int)
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
-    MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
+    MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
     MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     rollout_parser = subparsers.add_parser("rollout")
     rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
     rollout_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
-    rollout_parser.add_argument('-e', "--epsilon", nargs='?', default=0.1, type=float)
+    rollout_parser.add_argument('-e', "--epsilon", nargs='?', default=0, type=float)
     rollout_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
-                                                                    "smooth", "corner_dist"], default=None, type=str)
+                                                                    "smooth", "corner_dist", "expert"], default=None,
+                                type=str)
+    rollout_parser.add_argument("--use_expert", action='store_true')
     rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))

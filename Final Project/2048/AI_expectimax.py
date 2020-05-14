@@ -219,3 +219,75 @@ def quick_merge_row(row, right=True, old_score=None):
         values = values[::-1]
     return values if old_score is None else (values, old_score)
 
+
+        succ_2 = []
+        succ_4 = []
+        for row in range(grid.shape[0]):
+            for column in range(grid.shape[1]):
+                if grid[row,column]==0:
+                    temp = grid.copy()
+                    temp[row, column] = 2
+                    succ_2.append(temp)
+
+def _get_merge_directions(grid: np.ndarray):
+    move_list = [[] for _ in range(grid.size)]
+    ind_array = np.arange(grid.size).reshape(grid.shape)
+
+    for r in range(grid.shape[0]):
+        row = grid[r, :]
+        inds = ind_array[r, :][row != 0]
+        row = row[row != 0]
+        if row.size >= 2:
+            for i in range(row.size):
+                value = row[i]
+                if i > 0 and inds[i] % grid.shape[0] != 0 and row[i - 1] == value:  # Left
+                    move_list[inds[i]].append("Left")
+                if i < row.size - 1 and (inds[i] + 1) % grid.shape[0] != 0 and row[i + 1] == value:  # Right
+                    move_list[inds[i]].append("Right")
+
+    for c in range(grid.shape[1]):
+        col = grid[:, c]
+        inds = ind_array[:, c][col != 0]
+        col = col[col != 0]
+        if col.size >= 2:
+            for i in range(col.size):
+                value = col[i]
+                if i > 0 and inds[i] % grid.shape[1] != 0 and col[i - 1] == value:  # Up
+                    move_list[inds[i]].append("Up")
+                if i < col.size - 1 and (inds[i] + 1) % grid.shape[1] != 0 and col[i + 1] == value:  # Down
+                    move_list[inds[i]].append("Down")
+
+    return move_list
+
+
+def quick_merge_row(row, right=True, old_score=None):
+    """
+    Quick merge for a single row, courtesy of
+    https://stackoverflow.com/questions/22970210/most-efficient-way-to-shift-and-merge-the-elements-of-a-list-in-python-2048
+
+    Works for columns as well (right = down in that case)
+
+    :param row: Row of the game grid to merge
+    :param right: Whether to merge to the right or to the left (right by default)
+    :param old_score: The current game score if a new score should be calculated; None otherwise
+    :return: The merged row if old_score is None; else a tuple of (merged_row, new_score)
+    """
+    if right:
+        row = row[::-1]
+    values = []
+    empty = 0
+    for n in row:
+        if values and n == values[-1]:
+            values[-1] = 2 * n
+            if old_score is not None:
+                old_score += 2 * n
+            empty += 1
+        elif n:
+            values.append(n)
+        else:
+            empty += 1
+    values += [0] * empty
+    if right:
+        values = values[::-1]
+    return values if old_score is None else (values, old_score)
+

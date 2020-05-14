@@ -10,7 +10,7 @@ _MOVES = ["Up", "Down", "Left", "Right"]
 _KEYMAP = {"Up": pygame.K_UP, "Down": pygame.K_DOWN, "Left": pygame.K_LEFT, "Right": pygame.K_RIGHT}
 _REVERSE_KEYMAP = {v: k for k, v in _KEYMAP.items()}
 
-HEURISTICS = ["greedy", "safe", "safest", "monotonic", "smooth", "corner_dist"]
+HEURISTICS = ["greedy", "safe", "safest", "monotonic", "smooth", "corner_dist", "expert"]
 
 
 class _Node(object):
@@ -78,7 +78,8 @@ class MoveNode(_Node):
 
 
 class GameTree(object):
-    def __init__(self, grid: np.ndarray, max_search_depth=10, num_rollouts=100, epsilon=0.1, UCT=False):
+    def __init__(self, grid: np.ndarray, max_search_depth=10, num_rollouts=100, epsilon=0, UCT=False,
+                 use_expert_score=False):
         self.root = StateNode(np.copy(grid))
         self.cur_node = self.root
         self.max_search_depth = max_search_depth
@@ -87,6 +88,7 @@ class GameTree(object):
         self.UCT = UCT
         self.last_move = None
         self.max_score = 0
+        self.use_expert_score = use_expert_score
         super(GameTree, self).__init__()
 
     def MCTS(self, cur_grid: np.ndarray, cur_score):
@@ -95,60 +97,48 @@ class GameTree(object):
             # If this isn't our first search, update our current position in the tree (else we start at the root)
             self.cur_node.moves[hash(self.last_move)].add_state(cur_grid)
             self.cur_node = self.cur_node.moves[hash(self.last_move)].states[hash(str(cur_grid.tolist()))]
-            self.cur_node.visit_score = cur_score
+            self.cur_node.visit_score = expert_score(cur_grid) if self.use_expert_score else cur_score
 
         moves = valid_moves(self.cur_node.state)
+        search_node = self.cur_node
 
         for move in moves:
-            # Add move to children if not present
-            self.cur_node.add_move(move)
-            move_node = self.cur_node.moves[hash(move)]
-
-            # Simulate move
-            new_state, new_score = simulate_move(self.cur_node.state, move, cur_score)
-            move_node.add_state(new_state)
-            search_node = move_node.states[hash(str(new_state.tolist()))]
-            search_node.visit_score = new_score
-            self.max_score = max(self.max_score, new_score)
-
-            if len(valid_moves(new_state)) == 0:
-                search_node.avg_score = search_node.avg_score + (search_node.visit_score - search_node.avg_score) / (
-                        search_node.num_visits + 1)
-                search_node.num_visits += 1
-                continue
-
             for _ in range(self.num_rollouts):
-                for _ in range(self.max_search_depth):
-                    if len(valid_moves(search_node.state)) == 0:
-                        break
-                    # Choose a move
+                for d in range(self.max_search_depth + 1):
+                    if d == 0:
+                        new_move = move
                     else:
-                        if self.UCT:
-                            if len(search_node.unvisited) > 0:
-                                ind = random.choice(range(len(search_node.unvisited)))
-                                move = search_node.unvisited[ind]
-                                del search_node.unvisited[ind]
-                            else:
-                                move = search_node.select_next_move(self.max_score)
+                        if len(valid_moves(search_node.state)) == 0:
+                            break
+                        # Choose a move
                         else:
-                            if random.random() < self.epsilon:
-                                move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                            if self.UCT:
+                                if len(search_node.unvisited) > 0:
+                                    ind = random.choice(range(len(search_node.unvisited)))
+                                    new_move = search_node.unvisited[ind]
+                                    del search_node.unvisited[ind]
+                                else:
+                                    new_move = search_node.select_next_move(self.max_score)
                             else:
-                                # if len(search_node.moves) == 0:
-                                moves = []
-                                for h_type in ["smooth"]:
-                                    moves.append(
-                                        _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
-                                move = random.choice(moves)
-                            # else:
-                            #     move = search_node.get_best_move()
+                                if random.random() < self.epsilon:
+                                    new_move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
+                                else:
+                                    # if len(search_node.moves) == 0:
+                                    moves = []
+                                    for h_type in ["smooth"]:
+                                        moves.append(
+                                            _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
+                                    new_move = random.choice(moves)
+                                # else:
+                                #     move = search_node.get_best_move()
 
                     # Add move to children if not present
-                    search_node.add_move(move)
-                    move_node = search_node.moves[hash(move)]
+                    search_node.add_move(new_move)
+                    move_node = search_node.moves[hash(new_move)]
 
                     # Simulate move
-                    new_state, new_score = simulate_move(search_node.state, move, search_node.visit_score)
+                    new_state, new_score = simulate_move(search_node.state, new_move, search_node.visit_score)
+                    new_score = expert_score(search_node.state) if self.use_expert_score else new_score
                     move_node.add_state(new_state)
                     search_node = move_node.states[hash(str(new_state.tolist()))]
                     search_node.visit_score = new_score
@@ -177,28 +167,33 @@ class GameTree(object):
         return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[self.last_move]})
 
 
-def rollouts(grid: np.ndarray, score, heuristic_type=None, max_search_depth=10, num_rollouts=100, epsilon=0.1):
+def rollouts(grid: np.ndarray, score, heuristic_type=None, max_search_depth=10, num_rollouts=100, epsilon=0,
+             use_expert_score=False, hotfix=True):
     moves = valid_moves(grid)
     move_visits = [0] * len(moves)
     move_scores = [0] * len(moves)
     for move in range(len(moves)):
-        new_grid, new_score = simulate_move(grid, moves[move], score)
         avg_score = 0
-        if len(valid_moves(new_grid)) == 0:
-            move_scores[move] = new_score
-            continue
         for _ in range(num_rollouts):
-            for _ in range(max_search_depth):
-                if len(valid_moves(new_grid)) == 0:
-                    break
-                if random.random() < epsilon or heuristic_type is None:
-                    new_move = _REVERSE_KEYMAP[random_move_event(new_grid).dict["key"]]
+            for d in range(max_search_depth + 1):
+                if d == 0:
+                    new_grid, new_score = simulate_move(grid, moves[move], score)
                 else:
-                    new_move = _REVERSE_KEYMAP[heuristic_move_event(new_grid, heuristic_type).dict["key"]]
+                    if len(valid_moves(new_grid)) == 0:
+                        break
+                    if random.random() < epsilon or heuristic_type is None:
+                        new_move = _REVERSE_KEYMAP[random_move_event(new_grid).dict["key"]]
+                    else:
+                        new_move = _REVERSE_KEYMAP[heuristic_move_event(new_grid, heuristic_type).dict["key"]]
 
-                new_grid, new_score = simulate_move(new_grid, new_move, new_score)
-            avg_score = avg_score + (new_score - avg_score) / (move_visits[move] + 1)
+                    new_grid, new_score = simulate_move(new_grid, new_move, new_score)
+            if use_expert_score:
+                avg_score = avg_score + (expert_score(new_grid) - avg_score) / (move_visits[move] + 1)
+            else:
+                avg_score = avg_score + (new_score - avg_score) / (move_visits[move] + 1)
             move_visits[move] += 1
+            if hotfix:
+                new_grid, new_score = new_grid, new_score
         move_scores[move] = avg_score
     move_scores = np.array(move_scores)
     return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[moves[np.random.choice(
@@ -265,7 +260,7 @@ def random_move_event(grid: np.ndarray):
     return pygame.event.Event(pygame.KEYDOWN, {"key": random.choice([_KEYMAP[move] for move in valid_moves(grid)])})
 
 
-def quick_merge_row(row, right=True, old_score=None):
+def quick_merge_row(row, right=True, old_score=None, count_merges=False):
     """
     Quick merge for a single row, courtesy of
     https://stackoverflow.com/questions/22970210/most-efficient-way-to-shift-and-merge-the-elements-of-a-list-in-python-2048
@@ -275,15 +270,20 @@ def quick_merge_row(row, right=True, old_score=None):
     :param row: Row of the game grid to merge
     :param right: Whether to merge to the right or to the left (right by default)
     :param old_score: The current game score if a new score should be calculated; None otherwise
-    :return: The merged row if old_score is None; else a tuple of (merged_row, new_score)
+    :param count_merges: If True, additionally return a count of the number of tiles that were merged in the move
+    :return: The merged row if old_score is None; else a tuple of (merged_row, new_score), (merged_row, merge_count), or
+             (merged_row, new_score, merge_count), depending on the supplied parameters.
     """
     if right:
         row = row[::-1]
     values = []
     empty = 0
+    merges = 0
     for n in row:
         if values and n == values[-1]:
             values[-1] = 2 * n
+            if count_merges:
+                merges += 1
             if old_score is not None:
                 old_score += 2 * n
             empty += 1
@@ -294,26 +294,48 @@ def quick_merge_row(row, right=True, old_score=None):
     values += [0] * empty
     if right:
         values = values[::-1]
-    return values if old_score is None else (values, old_score)
+
+    if count_merges:
+        return (values, merges) if old_score is None else (values, old_score, merges)
+    else:
+        return values if old_score is None else (values, old_score)
 
 
-def quick_merge(grid: np.ndarray, direction: str, cur_score=None):
+def quick_merge(grid: np.ndarray, direction: str, cur_score=None, count_merges=False):
     merged = grid.copy()
+    count = 0
     if direction in ["Up", "Down"]:
         for c in range(grid.shape[1]):
-            if cur_score is None:
-                merged[:, c] = quick_merge_row(grid[:, c], direction == "Down", cur_score)
+            if count_merges:
+                if cur_score is None:
+                    merged[:, c], count = quick_merge_row(grid[:, c], direction == "Down", cur_score, count_merges)
+                else:
+                    merged[:, c], cur_score, count = quick_merge_row(grid[:, c], direction == "Down", cur_score,
+                                                                     count_merges)
             else:
-                merged[:, c], cur_score = quick_merge_row(grid[:, c], direction == "Down", cur_score)
+                if cur_score is None:
+                    merged[:, c] = quick_merge_row(grid[:, c], direction == "Down", cur_score)
+                else:
+                    merged[:, c], cur_score = quick_merge_row(grid[:, c], direction == "Down", cur_score)
 
     else:
         for r in range(grid.shape[0]):
-            if cur_score is None:
-                merged[r, :] = quick_merge_row(grid[r, :], direction == "Right", cur_score)
+            if count_merges:
+                if cur_score is None:
+                    merged[r, :], count = quick_merge_row(grid[r, :], direction == "Right", cur_score, count_merges)
+                else:
+                    merged[r, :], cur_score, count = quick_merge_row(grid[r, :], direction == "Right", cur_score,
+                                                                     count_merges)
             else:
-                merged[r, :], cur_score = quick_merge_row(grid[r, :], direction == "Right", cur_score)
+                if cur_score is None:
+                    merged[r, :] = quick_merge_row(grid[r, :], direction == "Right", cur_score)
+                else:
+                    merged[r, :], cur_score = quick_merge_row(grid[r, :], direction == "Right", cur_score)
 
-    return merged if cur_score is None else (merged, cur_score)
+    if count_merges:
+        return (merged, count) if cur_score is None else (merged, cur_score, count)
+    else:
+        return merged if cur_score is None else (merged, cur_score)
 
 
 def simulate_move(grid: np.ndarray, direction: str, cur_score):
@@ -343,9 +365,10 @@ def safe_moves(grid: np.ndarray):
     return [move for move in _MOVES if is_safe_move(grid, move)]
 
 
-def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np.ndarray], Union[int, float, complex]],
-                                                                    Callable[[np.ndarray, np.ndarray],
-                                                                             Union[int, float, complex]]]):
+def choose_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np.ndarray], Union[int, float, complex]],
+                                                                Callable[[np.ndarray, np.ndarray],
+                                                                             Union[int, float, complex]]],
+                compare_func=np.min):
     """
     Choose a move to take based on an evaluation function. The move chosen will be the argmin of the function.
     :param grid: The current game grid
@@ -353,7 +376,9 @@ def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np
     :param eval_func: The evaluation function, which will be evaluated using the current grid and/or the grids
                       resulting from making the moves in 'moves'. This can either have the signature eval_func(
                       new_grid) -> Number or eval_func(cur_grid, new_grid) -> Number.
-    :return: The chosen move. This will be the argmin of 'eval_func' when it is evaluated for each move.
+    :param compare_func: The function used to compare the outputs of 'eval_func'. Choices are either numpy.min or
+                         numpy.max.
+    :return: The chosen move. This will be the argmin/argmax of 'eval_func' when it is evaluated for each move.
     """
     move_evals = []
     for move in moves:
@@ -363,7 +388,7 @@ def choose_min_move(grid: np.ndarray, moves: list, eval_func: Union[Callable[[np
         else:
             move_evals.append(eval_func(new_grid))
     move_evals = np.array(move_evals)
-    return moves[np.random.choice(np.flatnonzero(move_evals == move_evals.min()))]
+    return moves[np.random.choice(np.flatnonzero(move_evals == compare_func(move_evals)))]
 
 
 def move_diff(cur_grid: np.ndarray, new_grid: np.ndarray):
@@ -382,6 +407,31 @@ def monotonicity(grid: np.ndarray):
 def dist_from_corner(grid: np.ndarray):
     r, c = grid.nonzero()
     return ((grid.shape[0] - 1 - r + grid.shape[1] - 1 - c) * grid[r, c]).sum()
+
+
+def expert_score(grid: np.ndarray):
+    pow_grid = np.log2(grid, out=np.zeros_like(grid), where=(grid != 0), casting='unsafe')
+    heuristic_score = 1600000
+    heuristic_score -= np.sum(pow_grid ** 3.5) * 11
+    heuristic_score += np.count_nonzero(grid == 0) * 540
+
+    _, merge_count = quick_merge(grid, "Right", count_merges=True)
+    _, new_count = quick_merge(grid, "Down", count_merges=True)
+    merge_count += new_count
+    heuristic_score += merge_count * 700
+
+    left_mask = pow_grid[:, :-1] > pow_grid[:, 1:]
+    top_mask = pow_grid[:-1, :] > pow_grid[1:, :]
+
+    horizontal_monotonicity = np.min([np.sum(pow_grid[:, :-1][left_mask] ** 4 - pow_grid[:, 1:][left_mask] ** 4),
+                                      np.sum(pow_grid[:, 1:][~left_mask] ** 4 - pow_grid[:, :-1][~left_mask] ** 4)])
+
+    vertical_monotonicity = np.min([np.sum(pow_grid[:-1, :][top_mask] ** 4 - pow_grid[1:, :][top_mask] ** 4),
+                                    np.sum(pow_grid[1:, :][~top_mask] ** 4 - pow_grid[:-1, :][~top_mask] ** 4)])
+
+    heuristic_score -= (horizontal_monotonicity + vertical_monotonicity) * 47
+
+    return heuristic_score
 
 
 def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
@@ -420,9 +470,9 @@ def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
             valid = valid_moves(grid)
             safe = safe_moves(grid)
             if safe:
-                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, safe, move_diff)]})
+                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, safe, move_diff)]})
             else:
-                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, move_diff)]})
+                return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, valid, move_diff)]})
 
         else:
             return pygame.event.Event(pygame.KEYDOWN,
@@ -430,13 +480,17 @@ def heuristic_move_event(grid: np.ndarray, heuristic_type="greedy"):
 
     elif heuristic_type == "monotonic":
         valid = valid_moves(grid)
-        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, monotonicity)]})
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, valid, monotonicity)]})
 
     elif heuristic_type == "smooth":  # Smooth
         valid = valid_moves(grid)
-        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, smoothness)]})
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, valid, smoothness)]})
 
-    else:  # Corner distance
+    elif heuristic_type == "corner_dist":
         grid = np.array(grid)
         valid = valid_moves(grid)
-        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_min_move(grid, valid, dist_from_corner)]})
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, valid, dist_from_corner)]})
+    else:  # Expert
+        grid = np.array(grid)
+        valid = valid_moves(grid)
+        return pygame.event.Event(pygame.KEYDOWN, {"key": _KEYMAP[choose_move(grid, valid, expert_score, np.max)]})

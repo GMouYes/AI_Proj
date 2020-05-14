@@ -25,7 +25,7 @@ normally, with full human control. Valid types are:
         * `-h|--help`: Displays command help
         * `num_games`: The number of games for the AI to play. The default is 10.
     * `heuristic`: Uses a naive heuristic-based AI to play games. Possible arguments are
-    `... heuristic [-h|--help] [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}] [num_games]`:
+    `... heuristic [-h|--help] [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist, expert}] [num_games]`:
         * `-h|--help`: Displays command help
         * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}`: The type of heuristic to use.
             * `greedy` makes any merge it can.
@@ -39,30 +39,37 @@ normally, with full human control. Valid types are:
             since this can lead to merging opportunities.
             * `corner_dist` penalizes high-valued tiles far from the bottom-right corner. The agent tries to minimize
             the sum of (*tile_value* x *Manhattan_distance_from_bottom_right*).
+            * `expert` is a scored hybrid of `monotonic` and `smooth`, prioritizing both monotonicity
+            vertically/horizontally while also rewarding merge opportunities.
             
             The default is type `safe`.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
     * `MCST`: Monte-Carlo Tree Search. Possible arguments are `... MCST [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
-    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-U|--UCT] [num_games]`:
+    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-U|--UCT] [--use_expert] [num_games]`:
         * `-h|--help`: Displays command help
         * `-r|--num_rollouts [NUM_ROLLOUTS]`: The number of simulations to run per move. Default is 100.
         * `-d|--max_depth [MAX_DEPTH]`: The maximum number of moves to run per simulation. Default is 4.
         * `-e|--epsilon [EPSILON]`: The exploration rate; the chance of making a random move during a simulation instead
-        of the known best. Default is 0.1.
+        of the known best. Default is 0.
         * `-U|--UCT`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
         Default is False.
+        * `--use_expert`: If supplied, uses the heuristic score from the `expert` heuristic to score board states,
+        instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
     * `rollout`: Instead of building a game tree, use rollouts to predict how well possible moves will do, with
     preference potentially governed by a heuristic. Possible arguments are `... rollout [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
-    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}] [num_games]`:
+    [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]]
+    [-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist, expert}] [--use_expert] [num_games]`:
         * `-h|--help`: Displays command help
         * `-r|--num_rollouts [NUM_ROLLOUTS]`: The number of simulations to run per move. Default is 500.
         * `-d|--max_depth [MAX_DEPTH]`: The maximum number of moves to run per simulation. Default is 4.
         * `-e|--epsilon [EPSILON]`: The exploration rate; the chance of making a random move during a simulation instead
-        of the known best. Default is 0.1.
-        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist}`: The heuristic to use during rollouts when
-        "exploiting" knowledge of the game. All options are the same as `heuristic` above. If no type is supplied, the
-        agent chooses randomly.
+        of the known best. Default is 0.
+        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist, expert}`: The heuristic to use during
+        rollouts when "exploiting" knowledge of the game. All options are the same as `heuristic` above.
+        If no type is supplied, the agent chooses randomly.
+        * `--use_expert`: If supplied, uses the heuristic score from the `expert` heuristic to score board states,
+        instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
