@@ -26,7 +26,7 @@ class StateNode(_Node):
     def __init__(self, state: np.ndarray, parent=None):
         self.state = state
         self.moves = {}  # Maps hashes of moves ("Up", "Down",...) to MoveNodes
-        self.unvisited = valid_moves(state)
+        # self.unvisited = valid_moves(state)
         super(StateNode, self).__init__(parent=parent)
 
     def __hash__(self):
@@ -76,39 +76,78 @@ class MoveNode(_Node):
 
 class expectimax(_Node):
 
-    def __init__(self, grid: np.ndarray, maxplayer,depth, max_search_depth=20):
+    def __init__(self, grid: np.ndarray,depth, max_search_depth=20):
         self.root = StateNode(np.copy(grid))
         self.cur_node = self.root
         self.max_search_depth = max_search_depth
         self.last_move = None
-        self.player = maxplayer
+        # True means the next agent is MAX
+        self.player = True
         self.depth = depth
+        self.directions = ['Left','Right','Up','Down']
 
 
     def Expectimax(self):
+        if self.isend(self.cur_node.state):
+            return self.heuristic(self.cur_node.state)
+        elif self.player:
+            self.player = False
+            return self.max_value(self.cur_node.state)
+        else:
+            return self.exp_value(self.cur_node.state)
 
-        return
 
-    def max_value(self):
+    def max_value(self,state):
         v = -np.inf
-
+        succ = self.successor_max(state)
+        for state in succ:
+            v = max(self.heuristic(state),v)
         return v
 
-    def exp_value(self):
+    def exp_value(self,state):
         v = 0
+        succ_2, succ_4 = self.successor_exp(state)
+        for succ in succ_2:
+            v += self.heuristic(succ) * 0.9
+        for succ in succ_4:
+            v += self.heuristic(succ) * 0.1
 
-        return v
+        return v/(len(succ_2)+len(succ_4))
 
-    def isend(self):
+    def isend(self, grid):
+        return np.any(grid == 2048) or not self.successor_max(grid) or not self.successor_exp(grid)
 
-        return
+    def successor_max(self, grid, cur_score=None):
+        # given a grid, generate successors
+        # put direction and grid in a dictionary
 
-    def successor(self):
+        succ =[]
+        for direction in self.directions:
+            merged = grid.copy()
+            for c in range(grid.shape[1]):
+                merged[:, c] = quick_merge_row(grid[:, c], direction == direction, cur_score)
+            if ~np.all(grid == merged):
+                succ.append(merged)
 
-        return
+        return succ
 
+    def successor_exp(self,grid,cur_score=None):
 
-    def heuristic(grid: np.ndarray):
+        succ_2 = []
+        succ_4 = []
+        for row in range(grid.shape[0]):
+            for column in range(grid.shape[1]):
+                if grid[row,column]==0:
+                    temp = grid.copy()
+                    temp[row, column] = 2
+                    succ_2.append(temp)
+
+                    temp1 = grid.copy()
+                    temp1[row, column] = 4
+                    succ_4.append(temp1)
+        return succ_2,succ_4
+
+    def heuristic(self,grid: np.ndarray):
         # calculated the empty space + heavy weights for largest values on the edge
         # number of possible merge
 
@@ -116,3 +155,67 @@ class expectimax(_Node):
         weighted_matrix = np.array([build_list[i:i + 4] for i in range(4)]).reshape(4, 4)
 
         return np.sum(grid == 0) + np.sum(np.multiply(grid, weighted_matrix))
+
+
+def _get_merge_directions(grid: np.ndarray):
+    move_list = [[] for _ in range(grid.size)]
+    ind_array = np.arange(grid.size).reshape(grid.shape)
+
+    for r in range(grid.shape[0]):
+        row = grid[r, :]
+        inds = ind_array[r, :][row != 0]
+        row = row[row != 0]
+        if row.size >= 2:
+            for i in range(row.size):
+                value = row[i]
+                if i > 0 and inds[i] % grid.shape[0] != 0 and row[i - 1] == value:  # Left
+                    move_list[inds[i]].append("Left")
+                if i < row.size - 1 and (inds[i] + 1) % grid.shape[0] != 0 and row[i + 1] == value:  # Right
+                    move_list[inds[i]].append("Right")
+
+    for c in range(grid.shape[1]):
+        col = grid[:, c]
+        inds = ind_array[:, c][col != 0]
+        col = col[col != 0]
+        if col.size >= 2:
+            for i in range(col.size):
+                value = col[i]
+                if i > 0 and inds[i] % grid.shape[1] != 0 and col[i - 1] == value:  # Up
+                    move_list[inds[i]].append("Up")
+                if i < col.size - 1 and (inds[i] + 1) % grid.shape[1] != 0 and col[i + 1] == value:  # Down
+                    move_list[inds[i]].append("Down")
+
+    return move_list
+
+
+def quick_merge_row(row, right=True, old_score=None):
+    """
+    Quick merge for a single row, courtesy of
+    https://stackoverflow.com/questions/22970210/most-efficient-way-to-shift-and-merge-the-elements-of-a-list-in-python-2048
+
+    Works for columns as well (right = down in that case)
+
+    :param row: Row of the game grid to merge
+    :param right: Whether to merge to the right or to the left (right by default)
+    :param old_score: The current game score if a new score should be calculated; None otherwise
+    :return: The merged row if old_score is None; else a tuple of (merged_row, new_score)
+    """
+    if right:
+        row = row[::-1]
+    values = []
+    empty = 0
+    for n in row:
+        if values and n == values[-1]:
+            values[-1] = 2 * n
+            if old_score is not None:
+                old_score += 2 * n
+            empty += 1
+        elif n:
+            values.append(n)
+        else:
+            empty += 1
+    values += [0] * empty
+    if right:
+        values = values[::-1]
+    return values if old_score is None else (values, old_score)
+
