@@ -22,7 +22,7 @@ setup(
         ]
 
     },
-    install_requires=['pygame', 'appdirs', 'numpy'],
+    install_requires=['pygame', 'appdirs'],
 
     author='quantum',
     author_email='quantum2048@gmail.com',
