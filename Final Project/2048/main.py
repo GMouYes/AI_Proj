@@ -44,7 +44,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
         score_file_prefix += '_' + AI_type
         state_file_prefix += '_' + AI_type
 
-    if AI_type in ["heuristic", "rollout"]:
+    if AI_type in ["heuristic", "rollout", "MCTS"]:
         if AI_type == "rollout" and kwargs["type"] is None or kwargs["type"] == 'None':
             type_str = "random"
         else:
@@ -176,7 +176,11 @@ def main():
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
+    MCTS_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
+                                                                    "smooth", "corner_dist", "expert"], default=None,
+                                type=str)
     MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
+    MCTS_parser.add_argument("--use_expert", action='store_true')
 
     rollout_parser = subparsers.add_parser("rollout")
     rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)

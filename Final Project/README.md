@@ -35,8 +35,8 @@ normally, with full human control. Valid types are:
             choose from, it picks the move that moves the group of tiles with the lowest value (moving larger tiles is
             more risky).
             * `monotonic` prioritizes monotonicity. Tiles should be increasing across rows and down columns.
-            * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each,
-            since this can lead to merging opportunities.
+            * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each
+            other, since this can lead to merging opportunities.
             * `corner_dist` penalizes high-valued tiles far from the bottom-right corner. The agent tries to minimize
             the sum of (*tile_value* x *Manhattan_distance_from_bottom_right*).
             * `expert` is a scored hybrid of `monotonic` and `smooth`, prioritizing both monotonicity
@@ -54,6 +54,9 @@ normally, with full human control. Valid types are:
         of the known best. Default is 0.
         * `-U|--UCT`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
         Default is False.
+        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist, expert}`: The heuristic to use during
+        the simulation phase when choosing moves to explore. All options are the same as `heuristic` above.
+        If no type is supplied, the agent chooses randomly.
         * `--use_expert`: If supplied, uses the heuristic score from the `expert` heuristic to score board states,
         instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
