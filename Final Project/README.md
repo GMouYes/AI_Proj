@@ -35,8 +35,8 @@ normally, with full human control. Valid types are:
             choose from, it picks the move that moves the group of tiles with the lowest value (moving larger tiles is
             more risky).
             * `monotonic` prioritizes monotonicity. Tiles should be increasing across rows and down columns.
-            * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each,
-            since this can lead to merging opportunities.
+            * `smooth` prioritizes smoothness. The agent will attempt to keep tiles of the same value adjacent to each
+            other, since this can lead to merging opportunities.
             * `corner_dist` penalizes high-valued tiles far from the bottom-right corner. The agent tries to minimize
             the sum of (*tile_value* x *Manhattan_distance_from_bottom_right*).
             * `expert` is a scored hybrid of `monotonic` and `smooth`, prioritizing both monotonicity
