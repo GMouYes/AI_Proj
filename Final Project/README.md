@@ -54,6 +54,9 @@ normally, with full human control. Valid types are:
         of the known best. Default is 0.
         * `-U|--UCT`: Whether to use Upper Confidence bounds for Trees to choose whether to explore or exploit.
         Default is False.
+        * `-t|--type {greedy, safe, safest, monotonic, smooth, corner_dist, expert}`: The heuristic to use during
+        the simulation phase when choosing moves to explore. All options are the same as `heuristic` above.
+        If no type is supplied, the agent chooses randomly.
         * `--use_expert`: If supplied, uses the heuristic score from the `expert` heuristic to score board states,
         instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.

@@ -91,7 +91,7 @@ class GameTree(object):
         self.use_expert_score = use_expert_score
         super(GameTree, self).__init__()
 
-    def MCTS(self, cur_grid: np.ndarray, cur_score):
+    def MCTS(self, cur_grid: np.ndarray, cur_score, heuristic_type=None):
 
         if self.last_move is not None:
             # If this isn't our first search, update our current position in the tree (else we start at the root)
@@ -120,17 +120,14 @@ class GameTree(object):
                                 else:
                                     new_move = search_node.select_next_move(self.max_score)
                             else:
-                                if random.random() < self.epsilon:
+                                if random.random() < self.epsilon or heuristic_type is None:
                                     new_move = _REVERSE_KEYMAP[random_move_event(search_node.state).dict["key"]]
                                 else:
-                                    # if len(search_node.moves) == 0:
-                                    moves = []
-                                    for h_type in ["smooth"]:
-                                        moves.append(
-                                            _REVERSE_KEYMAP[heuristic_move_event(search_node.state, h_type).dict["key"]])
-                                    new_move = random.choice(moves)
-                                # else:
-                                #     move = search_node.get_best_move()
+                                    if len(search_node.moves) == 0:
+                                        new_move = _REVERSE_KEYMAP[heuristic_move_event(search_node.state,
+                                                                                        heuristic_type).dict["key"]]
+                                    else:
+                                        new_move = search_node.get_best_move()
 
                     # Add move to children if not present
                     search_node.add_move(new_move)
@@ -138,7 +135,7 @@ class GameTree(object):
 
                     # Simulate move
                     new_state, new_score = simulate_move(search_node.state, new_move, search_node.visit_score)
-                    new_score = expert_score(search_node.state) if self.use_expert_score else new_score
+                    new_score = expert_score(new_state) if self.use_expert_score else new_score
                     move_node.add_state(new_state)
                     search_node = move_node.states[hash(str(new_state.tolist()))]
                     search_node.visit_score = new_score
@@ -277,6 +274,7 @@ def quick_merge_row(row, right=True, old_score=None, count_merges=False):
     if right:
         row = row[::-1]
     values = []
+    merge_vals = []
     empty = 0
     merges = 0
     for n in row:

@@ -51,7 +51,8 @@ def simulate(AI_type="heuristic", num_iterations=30, outfile="simulation.xlsx", 
         "rollout": "roll",
         'True': 'T',
         'False': 'F',
-        'None': 'rnd'
+        'None': 'rnd',
+        "use_expert": 'UE'
     }
 
     params = {
@@ -60,10 +61,11 @@ def simulate(AI_type="heuristic", num_iterations=30, outfile="simulation.xlsx", 
     }
 
     if AI_type in ["rollout", "MCTS"]:
-        params["max_depth"] = [1, 2, 3, 4, 5, 10, 20]
-        params["num_rollouts"] = [25, 50, 100, 500, 1000]
-        params["epsilon"] = [0, 0.1, 0.2, 0.3, 0.4]
+        params["max_depth"] = [4, 6, 8]
+        params["num_rollouts"] = [25, 50, 100]
+        params["epsilon"] = [0]
         params["type"] = ['None', *HEURISTICS]
+        params["use_expert"] = [True, False]
         if AI_type == "MCTS":
             params["UCT"] = [True, False]
 
@@ -87,7 +89,7 @@ def simulate(AI_type="heuristic", num_iterations=30, outfile="simulation.xlsx", 
         sheet_name = ''
         for opt in opts:
             sheet_name += SHORT_NAMES[opt] + \
-                          (SHORT_NAMES[opts[opt]] if str(opts[opt]) in SHORT_NAMES else str(opts[opt])) + ','
+                          (SHORT_NAMES[str(opts[opt])] if str(opts[opt]) in SHORT_NAMES else str(opts[opt])) + ','
         sheet_name = sheet_name[:-1]
         _write_to_excel(df, outfile, sheet_name)
 
