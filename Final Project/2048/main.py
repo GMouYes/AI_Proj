@@ -11,7 +11,7 @@ from appdirs import user_data_dir
 from game import Game2048
 from manager import GameManager
 import AI
-import expectimax
+from expectimax import Expectimax
 import time
 
 
@@ -60,6 +60,20 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
         try:
             while True:
                 event = pygame.event.wait()
+                manager.dispatch(event)
+                for event in pygame.event.get():
+                    manager.dispatch(event)
+                manager.draw()
+
+        finally:
+            pygame.quit()
+            manager.close()
+
+    if AI_type == "expectimax":
+        max_depth = kwargs["max_depth"]
+        try:
+            while True:
+                event = Expectimax(max_depth).get_best_move(np.array(manager.game.grid))
                 manager.dispatch(event)
                 for event in pygame.event.get():
                     manager.dispatch(event)
@@ -174,10 +188,12 @@ def main():
     rollout_parser.add_argument("--use_expert", action='store_true')
     rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
+    expectimax_parser = subparsers.add_parser("expectimax")
+    expectimax_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
+
     kwargs = vars(parser.parse_args(sys.argv[1:]))
-    
+
     start_time = time.time()
     run_game(**kwargs)
     end_time = time.time()
-    print("total seconds for the simulation:", int(end_time-start_time))
-
+    print("total seconds for the simulation:", int(end_time - start_time))
