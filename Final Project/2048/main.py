@@ -69,20 +69,6 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
             pygame.quit()
             manager.close()
 
-    if AI_type == "expectimax":
-        max_depth = kwargs["max_depth"]
-        try:
-            while True:
-                event = Expectimax(max_depth).get_best_move(np.array(manager.game.grid))
-                manager.dispatch(event)
-                for event in pygame.event.get():
-                    manager.dispatch(event)
-                manager.draw()
-
-        finally:
-            pygame.quit()
-            manager.close()
-
     else:
         try:
             pygame.event.set_blocked([pygame.KEYDOWN, pygame.MOUSEBUTTONUP])
@@ -124,8 +110,8 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                                         use_expert_score=kwargs["use_expert"])
                 elif AI_type == "MCTS":
                     event = tree.MCTS(np.array(manager.game.grid), manager.game.score)
-                # elif AI_type == "expectimax":
-                #     event = expectimax.Expectimax(5).get_best_move(np.array(manager.game.grid))
+                elif AI_type == "expectimax":
+                    event = Expectimax(kwargs['max_depth']).get_best_move(np.array(manager.game.grid))
                 else:
                     raise ValueError("AI mode selected but invalid AI type was supplied!")
                 manager.dispatch(event)
@@ -193,7 +179,7 @@ def main():
     rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     expectimax_parser = subparsers.add_parser("expectimax")
-    expectimax_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
+    expectimax_parser.add_argument('-d', "--max_depth", nargs='?', default=3, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
