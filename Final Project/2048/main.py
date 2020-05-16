@@ -158,23 +158,23 @@ def main():
     heuristic_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     MCTS_parser = subparsers.add_parser("MCTS")
-    MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=100, type=int)
+    MCTS_parser.add_argument('-r', "--num_rollouts", nargs='?', default=25, type=int)
     MCTS_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     MCTS_parser.add_argument('-e', "--epsilon", nargs='?', default=0, type=float)
     MCTS_parser.add_argument('-U', "--UCT", action='store_true')
     MCTS_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
-                                                                    "smooth", "corner_dist", "expert"], default=None,
-                                type=str)
+                                                                    "smooth", "corner_dist", "expert"],
+                             default="smooth", type=str)
     MCTS_parser.add_argument("num_games", nargs='?', default=10, type=int)
     MCTS_parser.add_argument("--use_expert", action='store_true')
 
     rollout_parser = subparsers.add_parser("rollout")
-    rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=500, type=int)
+    rollout_parser.add_argument('-r', "--num_rollouts", nargs='?', default=25, type=int)
     rollout_parser.add_argument('-d', "--max_depth", nargs='?', default=4, type=int)
     rollout_parser.add_argument('-e', "--epsilon", nargs='?', default=0, type=float)
     rollout_parser.add_argument('-t', "--type", nargs='?', choices=["greedy", "safe", "safest", "monotonic",
-                                                                    "smooth", "corner_dist", "expert"], default=None,
-                                type=str)
+                                                                    "smooth", "corner_dist", "expert"],
+                                default="safest", type=str)
     rollout_parser.add_argument("--use_expert", action='store_true')
     rollout_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
