@@ -76,3 +76,8 @@ normally, with full human control. Valid types are:
         * `--use_expert`: If supplied, uses the heuristic score from the `expert` heuristic to score board states,
         instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
+        
+    * `expectimax`: expectimax Search. Possible arguments are `... expectimax [-h|--help][-d|--max_depth [MAX_DEPTH]] ][num_games]`:
+        * `-h|--help`: Displays command help
+        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of depth of expectimax tree. 
+        * `num_games`: The number of games for the AI to play.
