@@ -96,7 +96,7 @@ def run_game(game_class=Game2048, title='2048: In Python!', data_dir=None, **kwa
                     game_scores.append(manager.game.score)
                     best_tiles.append(np.max(manager.game.grid))
                     print(len(game_scores))
-                    if AI_type in ["random", "heuristic", "MCTS", "rollout"]:
+                    if AI_type in ["random", "heuristic", "MCTS", "rollout", "expectimax"]:
                         condition = kwargs["num_games"] > len(game_scores)
                 elif manager.game.won == 1:
                     event = pygame.event.Event(pygame.MOUSEBUTTONUP, {"pos": manager.game.keep_going_pos})
@@ -180,6 +180,7 @@ def main():
 
     expectimax_parser = subparsers.add_parser("expectimax")
     expectimax_parser.add_argument('-d', "--max_depth", nargs='?', default=3, type=int)
+    expectimax_parser.add_argument("num_games", nargs='?', default=10, type=int)
 
     kwargs = vars(parser.parse_args(sys.argv[1:]))
 
