@@ -45,7 +45,7 @@ normally, with full human control. Valid types are:
             The default is type `safe`.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
-    * `MCST`: Monte-Carlo Tree Search. Possible arguments are `... MCST [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
+    * `MCTS`: Monte-Carlo Tree Search. Possible arguments are `... MCTS [-h|--help] [-r|--num_rollouts [NUM_ROLLOUTS]]
     [-d|--max_depth [MAX_DEPTH]] [-e|--epsilon[EPSILON]] [-U|--UCT] [--use_expert] [num_games]`:
         * `-h|--help`: Displays command help
         * `-r|--num_rollouts [NUM_ROLLOUTS]`: The number of simulations to run per move. Default is 100.
@@ -77,7 +77,7 @@ normally, with full human control. Valid types are:
         instead of the actual game score. This can lead to more cautious behavior. The default is False.
         * `num_games`: The number of games for the AI to play. The default is 10.
         
-    * `expectimax`: expectimax Search. Possible arguments are `... expectimax [-h|--help][-d|--max_depth [MAX_DEPTH]] ][num_games]`:
+    * `expectimax`: expectimax Search. Possible arguments are `... expectimax [-h|--help] [-d|--max_depth [MAX_DEPTH]] ] [num_games]`:
         * `-h|--help`: Displays command help
-        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of depth of expectimax tree. 
-        * `num_games`: The number of games for the AI to play.
+        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of (player) turns to look ahead. default is 3. 
+        * `num_games`: The number of games for the AI to play. The default is 10.
