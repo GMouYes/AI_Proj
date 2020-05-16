@@ -79,5 +79,5 @@ normally, with full human control. Valid types are:
         
     * `expectimax`: expectimax Search. Possible arguments are `... expectimax [-h|--help][-d|--max_depth [MAX_DEPTH]] ][num_games]`:
         * `-h|--help`: Displays command help
-        * `-d|--max_depth [MAX_DEPTH]`: The maximum number of depth of expectimax tree. 
+        * `-d|--max_depth [MAX_DEPTH]`: TThe maximum number of (player) turns to look ahead. 
         * `num_games`: The number of games for the AI to play.
