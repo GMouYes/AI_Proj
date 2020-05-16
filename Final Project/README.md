@@ -2,7 +2,7 @@
 
 Built largely from the source code of the [PyPI 2048 package](https://github.com/quantum5/2048).
 
-![2048 Preview](https://guanzhong.ca/assets/projects/2048-2fd91615603e0f5fed0299df4524c4494968c7b1d762cbb0209354cfa2215639.png)
+![Winning Game](winning_game.gif)
 
 ## Dependencies
 
